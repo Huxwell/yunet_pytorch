@@ -23,6 +23,7 @@ class RetinaFaceDataset(CustomDataset):
         self.NK = 5
         self.cat2label = {cat: i for i, cat in enumerate(self.CLASSES)}
         self.min_size = min_size
+        self.max_images = kwargs.pop('max_images', -1)
         self.gt_path = kwargs.get('gt_path')
         super(RetinaFaceDataset, self).__init__(**kwargs)
 
@@ -81,6 +82,9 @@ class RetinaFaceDataset(CustomDataset):
             assert name in bbox_map
             bbox_map[name]['objs'].append(line)
         print('origin image size', len(bbox_map))
+        if self.max_images > 0:
+            bbox_map = dict(list(bbox_map.items())[:self.max_images])
+            print(f'limiting to {self.max_images} images')
         data_infos = []
         for name in bbox_map:
             item = bbox_map[name]
