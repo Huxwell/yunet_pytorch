@@ -10,7 +10,7 @@ lr_config = dict(
     step=[50 * lr_mult, 68 * lr_mult])
 runner = dict(type='EpochBasedRunner', max_epochs=80 * lr_mult)
 
-checkpoint_config = dict(interval=80)
+checkpoint_config = dict(interval=1) # 80 default!
 log_config = dict(
     interval=50,
     hooks=[dict(type='TextLoggerHook'),
@@ -143,4 +143,4 @@ model = dict(
         nms=dict(type='nms', iou_threshold=0.45),
         max_per_img=-1,
     ))
-evaluation = dict(interval=1001, metric='mAP')
+evaluation = dict(interval=1, metric='mAP') # 1001 epochs by default!
