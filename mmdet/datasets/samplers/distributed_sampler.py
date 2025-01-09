@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import DistributedSampler as _DistributedSampler
 
 from mmdet.core.utils import sync_random_seed
-from mmdet.utils import get_device
+from mmdet.utils.util_distribution import get_device
 
 
 class DistributedSampler(_DistributedSampler):

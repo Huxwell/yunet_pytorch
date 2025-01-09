@@ -12,10 +12,15 @@ from mmcv import Config, DictAction
 from mmcv.runner import get_dist_info, init_dist
 from mmcv.utils import get_git_hash
 from mmdet import __version__
-from mmdet.apis import init_random_seed, set_random_seed, train_detector
-from mmdet.datasets import build_dataset
-from mmdet.models import build_detector
-from mmdet.utils import collect_env, get_device, get_root_logger, setup_multi_processes, update_data_root
+from mmdet.apis.train import init_random_seed, set_random_seed, train_detector
+from mmdet.datasets.builder import build_dataset
+from mmdet.models.builder import build_detector
+from mmdet.utils.util_distribution import get_device
+from mmdet.utils.logger import get_root_logger
+from mmdet.utils.setup_env import setup_multi_processes
+from mmdet.utils.misc import update_data_root
+from mmdet.utils.collect_env import collect_env
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
