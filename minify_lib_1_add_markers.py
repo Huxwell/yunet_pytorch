@@ -5,23 +5,18 @@ import astor
 class MarkerInjector(ast.NodeTransformer):
     function_idx = 0  # Initialize a global counter for function index
 
-    def __init__(self, filename):
-        self.filename = filename
-
     def visit_FunctionDef(self, node):
-        MarkerInjector.function_idx += 1
-        message = f"Filip YuNet Minify: Function fidx={MarkerInjector.function_idx} {node.name} called in {self.filename}:L{node.lineno}"
-        print_stmt = ast.Expr(value=ast.Call(
-            func=ast.Name(id='print', ctx=ast.Load()),
-            args=[ast.Str(s=message)],
-            keywords=[]
-        ))
-        ast.copy_location(print_stmt, node)
+        # Create a single-line print statement
+        print_stmt = ast.Expr(
+            value=ast.Call(
+                func=ast.Name(id='print', ctx=ast.Load()),
+                args=[ast.Constant(value=f'Filip YuNet Minify: Function fidx={self.function_idx} {node.name} called in {self.filename}:L{node.lineno}')],
+                keywords=[]
+            )
+        )
+        self.function_idx += 1
         node.body.insert(0, print_stmt)
         return node
-
-    def visit_AsyncFunctionDef(self, node):
-        return self.visit_FunctionDef(node)
 
 def inject_markers(file_path):
     print(f"Processing file: {file_path}")
