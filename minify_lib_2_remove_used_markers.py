@@ -13,9 +13,9 @@ def remove_injected_code(file_path, used_fidx_details):
             # Check if this function's start line and file path match any in the used_fidx_details
             if (self.filename, node.lineno) not in used_fidx_details:
                 print(f"Removing function: {node.name} in file: {self.filename}, line: {node.lineno}")
-                # Assuming the first statement is a print and the last is a return
-                if isinstance(node.body[0], ast.Expr) and isinstance(node.body[-1], ast.Return):
-                    node.body = node.body[1:-1]  # Remove the first and last statements
+                # Only remove the print statement if it exists
+                if isinstance(node.body[0], ast.Expr):
+                    node.body = node.body[1:]  # Remove just the first statement (print)
             return node
 
     transformer = CodeRemover()

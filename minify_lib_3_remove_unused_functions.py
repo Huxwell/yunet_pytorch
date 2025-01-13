@@ -4,14 +4,16 @@ import astor
 
 class FunctionRemover(ast.NodeTransformer):
     def visit_FunctionDef(self, node):
-        if node.body and isinstance(node.body[0], ast.Return):
-            return_source = astor.to_source(node.body[0]).strip()
-            if 'Filip YuNet Minify' in return_source:
-                print(f"Removing function '{node.name}' at line {node.lineno} in {self.filename}")
-                # Create function signature for the comment
-                params = ', '.join(astor.to_source(arg).rstrip('\n') for arg in node.args.args)
-                comment = ast.Expr(value=ast.Constant(value=f"#Auto-removed {node.name}({params})"))
-                return comment
+        if node.body and isinstance(node.body[0], ast.Expr):
+            # Check if first statement is a print with our marker
+            if isinstance(node.body[0].value, ast.Call) and isinstance(node.body[0].value.func, ast.Name):
+                print_source = astor.to_source(node.body[0]).strip()
+                if 'Filip YuNet Minify' in print_source:
+                    print(f"Removing function '{node.name}' at line {node.lineno} in {self.filename}")
+                    # Create function signature for the comment
+                    params = ', '.join(astor.to_source(arg).rstrip('\n') for arg in node.args.args)
+                    comment = ast.Expr(value=ast.Constant(value=f"#Auto-removed {node.name}({params})"))
+                    return comment
         print(f"Keeping function '{node.name}' at line {node.lineno} in {self.filename}")
         return node
 
