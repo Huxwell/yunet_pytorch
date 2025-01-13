@@ -18,35 +18,22 @@ def remove_markers(file_path, line_numbers):
         # Process each line that needs modification
         i = 0
         while i < len(lines):
-            # Check if this line starts a print statement
             current_line = lines[i].strip()
-            if current_line.startswith('print('):
-                # Try to find the end of the print statement
-                print_lines = [current_line]
-                j = i + 1
-                while j < len(lines) and not lines[j].strip().endswith(')'):
-                    print_lines.append(lines[j].strip())
-                    j += 1
-                if j < len(lines):
-                    print_lines.append(lines[j].strip())
-                
-                # Join all lines to check if it's our marker
-                full_print = ' '.join(print_lines)
-                if 'Filip YuNet Minify' in full_print and 'called in' in full_print:
-                    try:
-                        marker_text = full_print.split('called in')[1]
-                        reported_line = int(''.join(c for c in marker_text.split(':L')[1] if c.isdigit()))
-                        print(f"Found marker at line {i+1} reporting line {reported_line}")
-                        
-                        if reported_line in line_numbers:
-                            print(f"This is a match! Removing lines {i+1} to {j+1}")
-                            for k in range(i, j + 1):
-                                lines[k] = ''
-                            modified = True
-                            i = j + 1
-                            continue
-                    except Exception as e:
-                        print(f"Error parsing line: {e}")
+            if current_line.startswith("print('Filip YuNet Minify:") or current_line.startswith('print("Filip YuNet Minify:'):
+                try:
+                    # Extract the line number, being careful with spaces
+                    marker_text = current_line.split('called in')[1].strip()
+                    # Remove trailing quote, parenthesis and any spaces
+                    marker_text = marker_text.rstrip("')").rstrip("'").strip()
+                    reported_line = int(''.join(c for c in marker_text.split(':L')[1] if c.isdigit()))
+                    print(f"Found marker at line {i+1} reporting line {reported_line}")
+                    
+                    if reported_line in line_numbers:
+                        print(f"This is a match! Removing line {i+1}")
+                        lines[i] = ''
+                        modified = True
+                except Exception as e:
+                    print(f"Error parsing line: {e}")
             i += 1
         
         # Write back only if modified
