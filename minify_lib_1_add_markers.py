@@ -5,6 +5,10 @@ import astor
 class MarkerInjector(ast.NodeTransformer):
     function_idx = 0  # Initialize a global counter for function index
 
+    def __init__(self, filename):
+        super().__init__()
+        self.filename = filename
+
     def visit_FunctionDef(self, node):
         # Create a single-line print statement
         print_stmt = ast.Expr(
