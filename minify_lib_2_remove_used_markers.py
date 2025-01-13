@@ -11,11 +11,19 @@ def remove_markers(file_path, line_numbers):
         modified = False
         
         # Process each line that needs modification
-        for i in range(len(lines)):
+        i = 0
+        while i < len(lines):
             if (i + 1) in line_numbers and 'Filip YuNet Minify' in lines[i]:
-                lines[i] = ''  # Remove the line
-                modified = True
-                print(f"Removed marker at {file_path}:{i+1}")
+                # Check if this is a 3-line print statement
+                if i + 2 < len(lines) and lines[i].strip().startswith('print('):
+                    lines[i] = ''  # Remove first line
+                    lines[i + 1] = ''  # Remove second line
+                    lines[i + 2] = ''  # Remove third line
+                    modified = True
+                    print(f"Removed 3-line marker at {file_path}:{i+1}")
+                    i += 3
+                    continue
+            i += 1
         
         # Write back only if modified
         if modified:
@@ -35,16 +43,24 @@ def get_used_functions():
         with open('function_calls.log') as f:
             for line in f:
                 if "Filip YuNet Minify" in line and "called in" in line:
-                    # Get file path and line number
-                    parts = line.split(" called in ")[1].strip()
-                    file_path = parts.split(":L")[0]
-                    line_num = int(parts.split(":L")[1])
-                    
-                    # Add to our dict
-                    if file_path not in used:
-                        used[file_path] = set()
-                    used[file_path].add(line_num)
-                    print(f"Found used function at {file_path}:{line_num}")
+                    try:
+                        # Split on "called in" and take the second part
+                        location = line.split("called in ")[1].strip()
+                        # Split on ":L" to separate file path and line number
+                        file_path, rest = location.split(":L")
+                        # Take only the numeric part for line number
+                        line_num = int(''.join(c for c in rest if c.isdigit()))
+                        
+                        # Add to our dict
+                        if file_path not in used:
+                            used[file_path] = set()
+                        used[file_path].add(line_num)
+                        print(f"Found used function at {file_path}:{line_num}")
+                    except Exception as e:
+                        # Skip malformed lines
+                        print(f"Skipping malformed line: {line.strip()}")
+                        continue
+                        
     except Exception as e:
         print(f"Error parsing log file: {e}")
         return {}
