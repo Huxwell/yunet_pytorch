@@ -3,9 +3,14 @@ import os
 def remove_markers(file_path, line_numbers):
     """Remove markers from specific line numbers in a file."""
     try:
+        print(f"\nProcessing {file_path}")
+        print(f"Looking for line numbers: {sorted(line_numbers)}")
+        
         # Read all lines
         with open(file_path, 'r') as f:
             lines = f.readlines()
+        
+        print(f"File has {len(lines)} lines")
         
         # Track if we made any changes
         modified = False
@@ -13,25 +18,51 @@ def remove_markers(file_path, line_numbers):
         # Process each line that needs modification
         i = 0
         while i < len(lines):
-            if (i + 1) in line_numbers and 'Filip YuNet Minify' in lines[i]:
-                # Check if this is a 3-line print statement
-                if i + 2 < len(lines) and lines[i].strip().startswith('print('):
-                    lines[i] = ''  # Remove first line
-                    lines[i + 1] = ''  # Remove second line
-                    lines[i + 2] = ''  # Remove third line
-                    modified = True
-                    print(f"Removed 3-line marker at {file_path}:{i+1}")
-                    i += 3
-                    continue
+            # Check if this line starts a print statement
+            current_line = lines[i].strip()
+            if current_line.startswith('print('):
+                # Try to find the end of the print statement
+                print_lines = [current_line]
+                j = i + 1
+                while j < len(lines) and not lines[j].strip().endswith(')'):
+                    print_lines.append(lines[j].strip())
+                    j += 1
+                if j < len(lines):
+                    print_lines.append(lines[j].strip())
+                
+                # Join all lines to check if it's our marker
+                full_print = ' '.join(print_lines)
+                if 'Filip YuNet Minify' in full_print and 'called in' in full_print:
+                    try:
+                        marker_text = full_print.split('called in')[1]
+                        reported_line = int(''.join(c for c in marker_text.split(':L')[1] if c.isdigit()))
+                        print(f"Found marker at line {i+1} reporting line {reported_line}")
+                        
+                        if reported_line in line_numbers:
+                            print(f"This is a match! Removing lines {i+1} to {j+1}")
+                            for k in range(i, j + 1):
+                                lines[k] = ''
+                            modified = True
+                            i = j + 1
+                            continue
+                    except Exception as e:
+                        print(f"Error parsing line: {e}")
             i += 1
         
         # Write back only if modified
         if modified:
+            print("\nMaking changes...")
             # Remove any empty lines we created
+            original_length = len(lines)
             lines = [line for line in lines if line.strip()]
+            new_length = len(lines)
+            print(f"Removed {original_length - new_length} lines")
             print(f"Writing changes to {file_path}")
             with open(file_path, 'w') as f:
                 f.write(''.join(lines))
+        else:
+            print("\nNo changes needed")
+            
     except Exception as e:
         print(f"Error processing {file_path}: {e}")
 
@@ -39,6 +70,7 @@ def get_used_functions():
     """Parse the log file to get used functions."""
     used = {}  # file -> set of line numbers
     
+    print("Reading function_calls.log...")
     try:
         with open('function_calls.log') as f:
             for line in f:
@@ -55,16 +87,17 @@ def get_used_functions():
                         if file_path not in used:
                             used[file_path] = set()
                         used[file_path].add(line_num)
-                        print(f"Found used function at {file_path}:{line_num}")
+                        print(f"Found: {file_path} -> L{line_num}")
                     except Exception as e:
-                        # Skip malformed lines
                         print(f"Skipping malformed line: {line.strip()}")
+                        print(f"Error: {e}")
                         continue
                         
     except Exception as e:
         print(f"Error parsing log file: {e}")
         return {}
-        
+    
+    print(f"\nSummary: Found {sum(len(lines) for lines in used.values())} functions in {len(used)} files")
     return used
 
 def main():
