@@ -2,6 +2,19 @@ import ast
 import os
 import astor
 
+def parse_log_line(line):
+    # Format: "Filip YuNet Minify: Function fidx=X name called in path:LY"
+    if "Filip YuNet Minify" not in line:
+        return None
+    try:
+        # Extract filename and line number
+        file_part = line.split(" called in ")[1]
+        filename = file_part.split(":L")[0]
+        lineno = int(file_part.split(":L")[1])
+        return (filename, lineno)
+    except:
+        return None
+
 def remove_injected_code(file_path, used_fidx_details):
     with open(file_path, 'r', encoding='utf-8') as f:
         source = f.read()
@@ -10,16 +23,14 @@ def remove_injected_code(file_path, used_fidx_details):
     class CodeRemover(ast.NodeTransformer):
         def visit_FunctionDef(self, node):
             print(f"Processing function: {node.name} in file: {self.filename}, line: {node.lineno}")
-            # Check if this function's start line and file path match any in the used_fidx_details
             if (self.filename, node.lineno) not in used_fidx_details:
-                print(f"Removing function: {node.name} in file: {self.filename}, line: {node.lineno}")
-                # Only remove the print statement if it exists
+                print(f"Removing marker from: {node.name} in file: {self.filename}, line: {node.lineno}")
                 if isinstance(node.body[0], ast.Expr):
                     node.body = node.body[1:]  # Remove just the first statement (print)
             return node
 
     transformer = CodeRemover()
-    transformer.filename = file_path  # Pass the filename to the transformer
+    transformer.filename = file_path
     new_tree = transformer.visit(tree)
     new_source = astor.to_source(new_tree)
     with open(file_path, 'w', encoding='utf-8') as f:
@@ -30,8 +41,9 @@ def process_directory(directory, log_file):
     used_fidx_details = set()
     with open(log_file, 'r') as log:
         for line in log:
-            fidx, filename, lineno, _ = line.strip().split(',')
-            used_fidx_details.add((filename, int(lineno)))
+            result = parse_log_line(line.strip())
+            if result:
+                used_fidx_details.add(result)
 
     for root, _, files in os.walk(directory):
         for file in files:
