@@ -90,7 +90,7 @@ The `labelv2` comes from [SCRFD](https://github.com/deepinsight/insightface/tree
 Following MMdetection training processing.
 
 ```Shell
-CUDA_VISIBLE_DEVICES=0,1 bash tools/dist_train.sh ./configs/yunet_n.py 2 12345
+python tools/train.py
 ```
 
 ## Detection

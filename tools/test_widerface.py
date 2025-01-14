@@ -17,8 +17,8 @@ from mmdet.models import build_detector
 def parse_args():
     parser = argparse.ArgumentParser(
         description='MMDet test (and eval) a model')
-    parser.add_argument('config', help='test config file path')
-    parser.add_argument('checkpoint', help='checkpoint file')
+    parser.add_argument('--config', help='test config file path', default='configs/yunet_n.py')
+    parser.add_argument('--checkpoint', help='checkpoint file', default="training_runs/epoch_30_full_dataset.pth")
     parser.add_argument(
         '--out', default='./work_dirs/wout', help='output folder')
     parser.add_argument(

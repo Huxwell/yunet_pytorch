@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from six.moves import map, zip
 
-from ..mask.structures import BitmapMasks, PolygonMasks
+# from ..mask.structures import BitmapMasks, PolygonMasks
 
 
 def multi_apply(func, *args, **kwargs):

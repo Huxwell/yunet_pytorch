@@ -9,11 +9,13 @@ from mmcv.runner import (DistSamplerSeedHook, EpochBasedRunner,
                          Fp16OptimizerHook, OptimizerHook, build_optimizer,
                          build_runner, get_dist_info)
 
-from mmdet.core import DistEvalHook, EvalHook
-from mmdet.datasets import (build_dataloader, build_dataset,
-                            replace_ImageToTensor)
-from mmdet.utils import (build_ddp, build_dp, compat_cfg,
-                         find_latest_checkpoint, get_root_logger)
+from mmdet.core.evaluation.eval_hooks import DistEvalHook, EvalHook
+from mmdet.datasets.builder import (build_dataloader, build_dataset)
+from mmdet.datasets.utils import replace_ImageToTensor
+from mmdet.utils.util_distribution import (build_ddp, build_dp)
+from mmdet.utils.compat_config import compat_cfg
+from mmdet.utils.misc import find_latest_checkpoint
+from mmdet.utils.logger import get_root_logger
 
 
 def init_random_seed(seed=None, device='cuda'):

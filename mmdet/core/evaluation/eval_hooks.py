@@ -7,7 +7,7 @@ import torch.distributed as dist
 from mmcv.runner import DistEvalHook as BaseDistEvalHook
 from mmcv.runner import EvalHook as BaseEvalHook
 from torch.nn.modules.batchnorm import _BatchNorm
-
+from mmdet.apis.test import multi_gpu_test, single_gpu_test
 
 def _calc_dynamic_intervals(start_interval, dynamic_interval_list):
     assert mmcv.is_list_of(dynamic_interval_list, tuple)
@@ -52,7 +52,7 @@ class EvalHook(BaseEvalHook):
         if not self._should_evaluate(runner):
             return
 
-        from mmdet.apis import single_gpu_test
+        from mmdet.apis.test import single_gpu_test
         results = single_gpu_test(runner.model, self.dataloader, show=False)
         runner.log_buffer.output['eval_iter_num'] = len(self.dataloader)
         key_score = self.evaluate(runner, results)
