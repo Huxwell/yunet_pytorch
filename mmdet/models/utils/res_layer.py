@@ -1,4 +1,3 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 from mmcv.cnn import build_conv_layer, build_norm_layer
 from mmcv.runner import BaseModule, Sequential
 from torch import nn as nn
@@ -23,84 +22,40 @@ class ResLayer(Sequential):
             False for Hourglass, True for ResNet. Default: True
     """
 
-    def __init__(self,
-                 block,
-                 inplanes,
-                 planes,
-                 num_blocks,
-                 stride=1,
-                 avg_down=False,
-                 conv_cfg=None,
-                 norm_cfg=dict(type='BN'),
-                 downsample_first=True,
-                 **kwargs):
+    def __init__(self, block, inplanes, planes, num_blocks, stride=1,
+        avg_down=False, conv_cfg=None, norm_cfg=dict(type='BN'),
+        downsample_first=True, **kwargs):
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/models/utils/res_layer.py:L26 ')
         self.block = block
-
         downsample = None
         if stride != 1 or inplanes != planes * block.expansion:
             downsample = []
             conv_stride = stride
             if avg_down:
                 conv_stride = 1
-                downsample.append(
-                    nn.AvgPool2d(
-                        kernel_size=stride,
-                        stride=stride,
-                        ceil_mode=True,
-                        count_include_pad=False))
-            downsample.extend([
-                build_conv_layer(
-                    conv_cfg,
-                    inplanes,
-                    planes * block.expansion,
-                    kernel_size=1,
-                    stride=conv_stride,
-                    bias=False),
-                build_norm_layer(norm_cfg, planes * block.expansion)[1]
-            ])
+                downsample.append(nn.AvgPool2d(kernel_size=stride, stride=
+                    stride, ceil_mode=True, count_include_pad=False))
+            downsample.extend([build_conv_layer(conv_cfg, inplanes, planes *
+                block.expansion, kernel_size=1, stride=conv_stride, bias=
+                False), build_norm_layer(norm_cfg, planes * block.expansion
+                )[1]])
             downsample = nn.Sequential(*downsample)
-
         layers = []
         if downsample_first:
-            layers.append(
-                block(
-                    inplanes=inplanes,
-                    planes=planes,
-                    stride=stride,
-                    downsample=downsample,
-                    conv_cfg=conv_cfg,
-                    norm_cfg=norm_cfg,
-                    **kwargs))
+            layers.append(block(inplanes=inplanes, planes=planes, stride=
+                stride, downsample=downsample, conv_cfg=conv_cfg, norm_cfg=
+                norm_cfg, **kwargs))
             inplanes = planes * block.expansion
             for _ in range(1, num_blocks):
-                layers.append(
-                    block(
-                        inplanes=inplanes,
-                        planes=planes,
-                        stride=1,
-                        conv_cfg=conv_cfg,
-                        norm_cfg=norm_cfg,
-                        **kwargs))
-
-        else:  # downsample_first=False is for HourglassModule
+                layers.append(block(inplanes=inplanes, planes=planes,
+                    stride=1, conv_cfg=conv_cfg, norm_cfg=norm_cfg, **kwargs))
+        else:
             for _ in range(num_blocks - 1):
-                layers.append(
-                    block(
-                        inplanes=inplanes,
-                        planes=inplanes,
-                        stride=1,
-                        conv_cfg=conv_cfg,
-                        norm_cfg=norm_cfg,
-                        **kwargs))
-            layers.append(
-                block(
-                    inplanes=inplanes,
-                    planes=planes,
-                    stride=stride,
-                    downsample=downsample,
-                    conv_cfg=conv_cfg,
-                    norm_cfg=norm_cfg,
-                    **kwargs))
+                layers.append(block(inplanes=inplanes, planes=inplanes,
+                    stride=1, conv_cfg=conv_cfg, norm_cfg=norm_cfg, **kwargs))
+            layers.append(block(inplanes=inplanes, planes=planes, stride=
+                stride, downsample=downsample, conv_cfg=conv_cfg, norm_cfg=
+                norm_cfg, **kwargs))
         super(ResLayer, self).__init__(*layers)
 
 
@@ -113,45 +68,28 @@ class SimplifiedBasicBlock(BaseModule):
     """
     expansion = 1
 
-    def __init__(self,
-                 inplanes,
-                 planes,
-                 stride=1,
-                 dilation=1,
-                 downsample=None,
-                 style='pytorch',
-                 with_cp=False,
-                 conv_cfg=None,
-                 norm_cfg=dict(type='BN'),
-                 dcn=None,
-                 plugins=None,
-                 init_fg=None):
+    def __init__(self, inplanes, planes, stride=1, dilation=1, downsample=
+        None, style='pytorch', with_cp=False, conv_cfg=None, norm_cfg=dict(
+        type='BN'), dcn=None, plugins=None, init_fg=None):
+        print('Filip YuNet Minify: Function fidx=1 __init__ called in mmdet/models/utils/res_layer.py:L116 ')
         super(SimplifiedBasicBlock, self).__init__(init_fg)
         assert dcn is None, 'Not implemented yet.'
         assert plugins is None, 'Not implemented yet.'
         assert not with_cp, 'Not implemented yet.'
         self.with_norm = norm_cfg is not None
         with_bias = True if norm_cfg is None else False
-        self.conv1 = build_conv_layer(
-            conv_cfg,
-            inplanes,
-            planes,
-            3,
-            stride=stride,
-            padding=dilation,
-            dilation=dilation,
-            bias=with_bias)
+        self.conv1 = build_conv_layer(conv_cfg, inplanes, planes, 3, stride
+            =stride, padding=dilation, dilation=dilation, bias=with_bias)
         if self.with_norm:
-            self.norm1_name, norm1 = build_norm_layer(
-                norm_cfg, planes, postfix=1)
+            self.norm1_name, norm1 = build_norm_layer(norm_cfg, planes,
+                postfix=1)
             self.add_module(self.norm1_name, norm1)
-        self.conv2 = build_conv_layer(
-            conv_cfg, planes, planes, 3, padding=1, bias=with_bias)
+        self.conv2 = build_conv_layer(conv_cfg, planes, planes, 3, padding=
+            1, bias=with_bias)
         if self.with_norm:
-            self.norm2_name, norm2 = build_norm_layer(
-                norm_cfg, planes, postfix=2)
+            self.norm2_name, norm2 = build_norm_layer(norm_cfg, planes,
+                postfix=2)
             self.add_module(self.norm2_name, norm2)
-
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
         self.stride = stride
@@ -160,31 +98,28 @@ class SimplifiedBasicBlock(BaseModule):
 
     @property
     def norm1(self):
+        print('Filip YuNet Minify: Function fidx=2 norm1 called in mmdet/models/utils/res_layer.py:L162 ')
         """nn.Module: normalization layer after the first convolution layer"""
         return getattr(self, self.norm1_name) if self.with_norm else None
 
     @property
     def norm2(self):
+        print('Filip YuNet Minify: Function fidx=3 norm2 called in mmdet/models/utils/res_layer.py:L167 ')
         """nn.Module: normalization layer after the second convolution layer"""
         return getattr(self, self.norm2_name) if self.with_norm else None
 
     def forward(self, x):
+        print('Filip YuNet Minify: Function fidx=4 forward called in mmdet/models/utils/res_layer.py:L171 ')
         """Forward function."""
-
         identity = x
-
         out = self.conv1(x)
         if self.with_norm:
             out = self.norm1(out)
         out = self.relu(out)
-
         out = self.conv2(out)
         if self.with_norm:
             out = self.norm2(out)
-
         if self.downsample is not None:
             identity = self.downsample(x)
-
         out += identity
-
         return out

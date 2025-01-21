@@ -1,12 +1,8 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import itertools
-
 import numpy as np
 import torch
 from mmcv.runner import get_dist_info
 from torch.utils.data.sampler import Sampler
-
-from mmdet.core.utils import sync_random_seed
 
 
 class InfiniteGroupBatchSampler(Sampler):
@@ -32,15 +28,11 @@ class InfiniteGroupBatchSampler(Sampler):
             should be noted that `shuffle` can not guarantee that you can
             generate sequential indices because it need to ensure
             that all indices in a batch is in a group. Default: True.
-    """  # noqa: W605
+    """
 
-    def __init__(self,
-                 dataset,
-                 batch_size=1,
-                 world_size=None,
-                 rank=None,
-                 seed=0,
-                 shuffle=True):
+    def __init__(self, dataset, batch_size=1, world_size=None, rank=None,
+        seed=0, shuffle=True):
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/datasets/samplers/infinite_sampler.py:L37 ')
         _rank, _world_size = get_dist_info()
         if world_size is None:
             world_size = _world_size
@@ -50,42 +42,34 @@ class InfiniteGroupBatchSampler(Sampler):
         self.world_size = world_size
         self.dataset = dataset
         self.batch_size = batch_size
-        # In distributed sampling, different ranks should sample
-        # non-overlapped data in the dataset. Therefore, this function
-        # is used to make sure that each rank shuffles the data indices
-        # in the same order based on the same seed. Then different ranks
-        # could use different indices to select non-overlapped data from the
-        # same data list.
-        self.seed = sync_random_seed(seed)
+        self.seed = seed
         self.shuffle = shuffle
-
         assert hasattr(self.dataset, 'flag')
         self.flag = self.dataset.flag
         self.group_sizes = np.bincount(self.flag)
-        # buffer used to save indices of each group
         self.buffer_per_group = {k: [] for k in range(len(self.group_sizes))}
-
         self.size = len(dataset)
         self.indices = self._indices_of_rank()
 
     def _infinite_indices(self):
+        print('Filip YuNet Minify: Function fidx=1 _infinite_indices called in mmdet/datasets/samplers/infinite_sampler.py:L71 ')
         """Infinitely yield a sequence of indices."""
         g = torch.Generator()
         g.manual_seed(self.seed)
         while True:
             if self.shuffle:
                 yield from torch.randperm(self.size, generator=g).tolist()
-
             else:
                 yield from torch.arange(self.size).tolist()
 
     def _indices_of_rank(self):
+        print('Filip YuNet Minify: Function fidx=2 _indices_of_rank called in mmdet/datasets/samplers/infinite_sampler.py:L82 ')
         """Slice the infinite indices by rank."""
-        yield from itertools.islice(self._infinite_indices(), self.rank, None,
-                                    self.world_size)
+        yield from itertools.islice(self._infinite_indices(), self.rank,
+            None, self.world_size)
 
     def __iter__(self):
-        # once batch size is reached, yield the indices
+        print('Filip YuNet Minify: Function fidx=3 __iter__ called in mmdet/datasets/samplers/infinite_sampler.py:L87 ')
         for idx in self.indices:
             flag = self.flag[idx]
             group_buffer = self.buffer_per_group[flag]
@@ -95,10 +79,12 @@ class InfiniteGroupBatchSampler(Sampler):
                 del group_buffer[:]
 
     def __len__(self):
+        print('Filip YuNet Minify: Function fidx=4 __len__ called in mmdet/datasets/samplers/infinite_sampler.py:L97 ')
         """Length of base dataset."""
         return self.size
 
     def set_epoch(self, epoch):
+        print('Filip YuNet Minify: Function fidx=5 set_epoch called in mmdet/datasets/samplers/infinite_sampler.py:L101 ')
         """Not supported in `IterationBased` runner."""
         raise NotImplementedError
 
@@ -123,15 +109,11 @@ class InfiniteBatchSampler(Sampler):
         rank (int, optional): Rank of current process. Default: None.
         seed (int): Random seed. Default: 0.
         shuffle (bool): Whether shuffle the dataset or not. Default: True.
-    """  # noqa: W605
+    """
 
-    def __init__(self,
-                 dataset,
-                 batch_size=1,
-                 world_size=None,
-                 rank=None,
-                 seed=0,
-                 shuffle=True):
+    def __init__(self, dataset, batch_size=1, world_size=None, rank=None,
+        seed=0, shuffle=True):
+        print('Filip YuNet Minify: Function fidx=6 __init__ called in mmdet/datasets/samplers/infinite_sampler.py:L128 ')
         _rank, _world_size = get_dist_info()
         if world_size is None:
             world_size = _world_size
@@ -141,35 +123,30 @@ class InfiniteBatchSampler(Sampler):
         self.world_size = world_size
         self.dataset = dataset
         self.batch_size = batch_size
-        # In distributed sampling, different ranks should sample
-        # non-overlapped data in the dataset. Therefore, this function
-        # is used to make sure that each rank shuffles the data indices
-        # in the same order based on the same seed. Then different ranks
-        # could use different indices to select non-overlapped data from the
-        # same data list.
         self.seed = sync_random_seed(seed)
         self.shuffle = shuffle
         self.size = len(dataset)
         self.indices = self._indices_of_rank()
 
     def _infinite_indices(self):
+        print('Filip YuNet Minify: Function fidx=7 _infinite_indices called in mmdet/datasets/samplers/infinite_sampler.py:L155 ')
         """Infinitely yield a sequence of indices."""
         g = torch.Generator()
         g.manual_seed(self.seed)
         while True:
             if self.shuffle:
                 yield from torch.randperm(self.size, generator=g).tolist()
-
             else:
                 yield from torch.arange(self.size).tolist()
 
     def _indices_of_rank(self):
+        print('Filip YuNet Minify: Function fidx=8 _indices_of_rank called in mmdet/datasets/samplers/infinite_sampler.py:L166 ')
         """Slice the infinite indices by rank."""
-        yield from itertools.islice(self._infinite_indices(), self.rank, None,
-                                    self.world_size)
+        yield from itertools.islice(self._infinite_indices(), self.rank,
+            None, self.world_size)
 
     def __iter__(self):
-        # once batch size is reached, yield the indices
+        print('Filip YuNet Minify: Function fidx=9 __iter__ called in mmdet/datasets/samplers/infinite_sampler.py:L171 ')
         batch_buffer = []
         for idx in self.indices:
             batch_buffer.append(idx)
@@ -178,9 +155,11 @@ class InfiniteBatchSampler(Sampler):
                 batch_buffer = []
 
     def __len__(self):
+        print('Filip YuNet Minify: Function fidx=10 __len__ called in mmdet/datasets/samplers/infinite_sampler.py:L180 ')
         """Length of base dataset."""
         return self.size
 
     def set_epoch(self, epoch):
+        print('Filip YuNet Minify: Function fidx=11 set_epoch called in mmdet/datasets/samplers/infinite_sampler.py:L184 ')
         """Not supported in `IterationBased` runner."""
         raise NotImplementedError

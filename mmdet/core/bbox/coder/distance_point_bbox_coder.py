@@ -1,6 +1,5 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 from ..builder import BBOX_CODERS
-from ..transforms import bbox2distance, distance2bbox
+from tools.compare_inference import distance2bbox
 from .base_bbox_coder import BaseBBoxCoder
 
 
@@ -17,10 +16,12 @@ class DistancePointBBoxCoder(BaseBBoxCoder):
     """
 
     def __init__(self, clip_border=True):
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/core/bbox/coder/distance_point_bbox_coder.py:L19 ')
         super(BaseBBoxCoder, self).__init__()
         self.clip_border = clip_border
 
     def encode(self, points, gt_bboxes, max_dis=None, eps=0.1):
+        print('Filip YuNet Minify: Function fidx=1 encode called in mmdet/core/bbox/coder/distance_point_bbox_coder.py:L23 ')
         """Encode bounding box to distances.
 
         Args:
@@ -39,6 +40,7 @@ class DistancePointBBoxCoder(BaseBBoxCoder):
         return bbox2distance(points, gt_bboxes, max_dis, eps)
 
     def decode(self, points, pred_bboxes, max_shape=None):
+        print('Filip YuNet Minify: Function fidx=2 decode called in mmdet/core/bbox/coder/distance_point_bbox_coder.py:L41 ')
         """Decode distance prediction to bounding box.
 
         Args:

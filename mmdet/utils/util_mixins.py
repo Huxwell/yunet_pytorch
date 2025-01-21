@@ -1,4 +1,3 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 """This module defines the :class:`NiceRepr` mixin class, which defines a
 ``__repr__`` and ``__str__`` method that only depend on a custom ``__nice__``
 method, which you must define. This means you only have to overload one
@@ -74,17 +73,16 @@ class NiceRepr:
     """
 
     def __nice__(self):
+        print('Filip YuNet Minify: Function fidx=0 __nice__ called in mmdet/utils/util_mixins.py:L76 ')
         """str: a "nice" summary string describing this module"""
         if hasattr(self, '__len__'):
-            # It is a common pattern for objects to use __len__ in __nice__
-            # As a convenience we define a default __nice__ for these objects
             return str(len(self))
         else:
-            # In all other cases force the subclass to overload __nice__
             raise NotImplementedError(
                 f'Define the __nice__ method for {self.__class__!r}')
 
     def __repr__(self):
+        print('Filip YuNet Minify: Function fidx=1 __repr__ called in mmdet/utils/util_mixins.py:L87 ')
         """str: the string of the module"""
         try:
             nice = self.__nice__()
@@ -95,6 +93,7 @@ class NiceRepr:
             return object.__repr__(self)
 
     def __str__(self):
+        print('Filip YuNet Minify: Function fidx=2 __str__ called in mmdet/utils/util_mixins.py:L97 ')
         """str: the string of the module"""
         try:
             classname = self.__class__.__name__

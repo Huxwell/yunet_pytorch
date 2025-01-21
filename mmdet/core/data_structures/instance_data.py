@@ -1,9 +1,6 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import itertools
-
 import numpy as np
 import torch
-
 from .general_data import GeneralData
 
 
@@ -64,30 +61,24 @@ class InstanceData(GeneralData):
     """
 
     def __setattr__(self, name, value):
-
+        print('Filip YuNet Minify: Function fidx=0 __setattr__ called in mmdet/core/data_structures/instance_data.py:L66 ')
         if name in ('_meta_info_fields', '_data_fields'):
             if not hasattr(self, name):
                 super().__setattr__(name, value)
             else:
                 raise AttributeError(
-                    f'{name} has been used as a '
-                    f'private attribute, which is immutable. ')
-
+                    f'{name} has been used as a private attribute, which is immutable. '
+                    )
         else:
-            assert isinstance(value, (torch.Tensor, np.ndarray, list)), \
-                f'Can set {type(value)}, only support' \
-                f' {(torch.Tensor, np.ndarray, list)}'
-
+            assert isinstance(value, (torch.Tensor, np.ndarray, list)
+                ), f'Can set {type(value)}, only support {torch.Tensor, np.ndarray, list}'
             if self._data_fields:
-                assert len(value) == len(self), f'the length of ' \
-                                             f'values {len(value)} is ' \
-                                             f'not consistent with' \
-                                             f' the length ' \
-                                             f'of this :obj:`InstanceData` ' \
-                                             f'{len(self)} '
+                assert len(value) == len(self
+                    ), f'the length of values {len(value)} is not consistent with the length of this :obj:`InstanceData` {len(self)} '
             super().__setattr__(name, value)
 
     def __getitem__(self, item):
+        print('Filip YuNet Minify: Function fidx=1 __getitem__ called in mmdet/core/data_structures/instance_data.py:L90 ')
         """
         Args:
             item (str, obj:`slice`,
@@ -98,34 +89,22 @@ class InstanceData(GeneralData):
             obj:`InstanceData`: Corresponding values.
         """
         assert len(self), ' This is a empty instance'
-
-        assert isinstance(
-            item, (str, slice, int, torch.LongTensor, torch.BoolTensor))
-
+        assert isinstance(item, (str, slice, int, torch.LongTensor, torch.
+            BoolTensor))
         if isinstance(item, str):
             return getattr(self, item)
-
         if type(item) == int:
             if item >= len(self) or item < -len(self):
                 raise IndexError(f'Index {item} out of range!')
             else:
-                # keep the dimension
                 item = slice(item, None, len(self))
-
         new_data = self.new()
-        if isinstance(item, (torch.Tensor)):
-            assert item.dim() == 1, 'Only support to get the' \
-                                 ' values along the first dimension.'
+        if isinstance(item, torch.Tensor):
+            assert item.dim(
+                ) == 1, 'Only support to get the values along the first dimension.'
             if isinstance(item, torch.BoolTensor):
-                assert len(item) == len(self), f'The shape of the' \
-                                               f' input(BoolTensor)) ' \
-                                               f'{len(item)} ' \
-                                               f' does not match the shape ' \
-                                               f'of the indexed tensor ' \
-                                               f'in results_filed ' \
-                                               f'{len(self)} at ' \
-                                               f'first dimension. '
-
+                assert len(item) == len(self
+                    ), f'The shape of the input(BoolTensor)) {len(item)}  does not match the shape of the indexed tensor in results_filed {len(self)} at first dimension. '
             for k, v in self.items():
                 if isinstance(v, torch.Tensor):
                     new_data[k] = v[item]
@@ -133,7 +112,6 @@ class InstanceData(GeneralData):
                     new_data[k] = v[item.cpu().numpy()]
                 elif isinstance(v, list):
                     r_list = []
-                    # convert to indexes from boolTensor
                     if isinstance(item, torch.BoolTensor):
                         indexes = torch.nonzero(item).view(-1)
                     else:
@@ -142,13 +120,13 @@ class InstanceData(GeneralData):
                         r_list.append(v[index])
                     new_data[k] = r_list
         else:
-            # item is a slice
             for k, v in self.items():
                 new_data[k] = v[item]
         return new_data
 
     @staticmethod
     def cat(instances_list):
+        print('Filip YuNet Minify: Function fidx=2 cat called in mmdet/core/data_structures/instance_data.py:L151 ')
         """Concat the predictions of all :obj:`InstanceData` in the list.
 
         Args:
@@ -158,12 +136,11 @@ class InstanceData(GeneralData):
         Returns:
             obj:`InstanceData`
         """
-        assert all(
-            isinstance(results, InstanceData) for results in instances_list)
+        assert all(isinstance(results, InstanceData) for results in
+            instances_list)
         assert len(instances_list) > 0
         if len(instances_list) == 1:
             return instances_list[0]
-
         new_data = instances_list[0].new()
         for k in instances_list[0]._data_fields:
             values = [results[k] for results in instances_list]
@@ -181,6 +158,7 @@ class InstanceData(GeneralData):
         return new_data
 
     def __len__(self):
+        print('Filip YuNet Minify: Function fidx=3 __len__ called in mmdet/core/data_structures/instance_data.py:L183 ')
         if len(self._data_fields):
             for v in self.values():
                 return len(v)

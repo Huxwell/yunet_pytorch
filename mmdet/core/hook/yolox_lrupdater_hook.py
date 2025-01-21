@@ -1,7 +1,5 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 from mmcv.runner.hooks import HOOKS
-from mmcv.runner.hooks.lr_updater import (CosineAnnealingLrUpdaterHook,
-                                          annealing_cos)
+from mmcv.runner.hooks.lr_updater import CosineAnnealingLrUpdaterHook, annealing_cos
 
 
 @HOOKS.register_module()
@@ -21,18 +19,18 @@ class YOLOXLrUpdaterHook(CosineAnnealingLrUpdaterHook):
     """
 
     def __init__(self, num_last_epochs, **kwargs):
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/core/hook/yolox_lrupdater_hook.py:L23 ')
         self.num_last_epochs = num_last_epochs
         super(YOLOXLrUpdaterHook, self).__init__(**kwargs)
 
     def get_warmup_lr(self, cur_iters):
+        print('Filip YuNet Minify: Function fidx=1 get_warmup_lr called in mmdet/core/hook/yolox_lrupdater_hook.py:L27 ')
 
         def _get_warmup_lr(cur_iters, regular_lr):
-            # exp warmup scheme
-            k = self.warmup_ratio * pow(
-                (cur_iters + 1) / float(self.warmup_iters), 2)
-            warmup_lr = [_lr * k for _lr in regular_lr]
+            k = self.warmup_ratio * pow((cur_iters + 1) / float(self.
+                warmup_iters), 2)
+            warmup_lr = [(_lr * k) for _lr in regular_lr]
             return warmup_lr
-
         if isinstance(self.base_lr, dict):
             lr_groups = {}
             for key, base_lr in self.base_lr.items():
@@ -42,26 +40,21 @@ class YOLOXLrUpdaterHook(CosineAnnealingLrUpdaterHook):
             return _get_warmup_lr(cur_iters, self.base_lr)
 
     def get_lr(self, runner, base_lr):
+        print('Filip YuNet Minify: Function fidx=2 get_lr called in mmdet/core/hook/yolox_lrupdater_hook.py:L44 ')
         last_iter = len(runner.data_loader) * self.num_last_epochs
-
         if self.by_epoch:
             progress = runner.epoch
             max_progress = runner.max_epochs
         else:
             progress = runner.iter
             max_progress = runner.max_iters
-
         progress += 1
-
         if self.min_lr_ratio is not None:
             target_lr = base_lr * self.min_lr_ratio
         else:
             target_lr = self.min_lr
-
         if progress >= max_progress - last_iter:
-            # fixed learning rate
             return target_lr
         else:
-            return annealing_cos(
-                base_lr, target_lr, (progress - self.warmup_iters) /
-                (max_progress - self.warmup_iters - last_iter))
+            return annealing_cos(base_lr, target_lr, (progress - self.
+                warmup_iters) / (max_progress - self.warmup_iters - last_iter))

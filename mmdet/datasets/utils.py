@@ -1,16 +1,13 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import warnings
-
 from mmcv.cnn import VGG
 from mmcv.runner.hooks import HOOKS, Hook
-
 from mmdet.datasets.builder import PIPELINES
-from mmdet.datasets.pipelines import (LoadAnnotations, LoadImageFromFile,
-                                      LoadPanopticAnnotations)
+from mmdet.datasets.pipelines import LoadAnnotations, LoadImageFromFile, LoadPanopticAnnotations
 
 
 def replace_ImageToTensor(pipelines):
+    print('Filip YuNet Minify: Function fidx=0 replace_ImageToTensor called in mmdet/datasets/utils.py:L13 ')
     """Replace the ImageToTensor transform in a data pipeline to
     DefaultFormatBundle, which is normally useful in batch inference.
 
@@ -58,19 +55,18 @@ def replace_ImageToTensor(pipelines):
     for i, pipeline in enumerate(pipelines):
         if pipeline['type'] == 'MultiScaleFlipAug':
             assert 'transforms' in pipeline
-            pipeline['transforms'] = replace_ImageToTensor(
-                pipeline['transforms'])
+            pipeline['transforms'] = replace_ImageToTensor(pipeline[
+                'transforms'])
         elif pipeline['type'] == 'ImageToTensor':
             warnings.warn(
-                '"ImageToTensor" pipeline is replaced by '
-                '"DefaultFormatBundle" for batch inference. It is '
-                'recommended to manually replace it in the test '
-                'data pipeline in your config file.', UserWarning)
+                '"ImageToTensor" pipeline is replaced by "DefaultFormatBundle" for batch inference. It is recommended to manually replace it in the test data pipeline in your config file.'
+                , UserWarning)
             pipelines[i] = {'type': 'DefaultFormatBundle'}
     return pipelines
 
 
 def get_loading_pipeline(pipeline):
+    print('Filip YuNet Minify: Function fidx=1 get_loading_pipeline called in mmdet/datasets/utils.py:L73 ')
     """Only keep loading image and annotations related configuration.
 
     Args:
@@ -95,20 +91,16 @@ def get_loading_pipeline(pipeline):
         ...    dict(type='LoadImageFromFile'),
         ...    dict(type='LoadAnnotations', with_bbox=True)
         ...    ]
-        >>> assert expected_pipelines ==\
-        ...        get_loading_pipeline(pipelines)
+        >>> assert expected_pipelines ==        ...        get_loading_pipeline(pipelines)
     """
     loading_pipeline_cfg = []
     for cfg in pipeline:
         obj_cls = PIPELINES.get(cfg['type'])
-        # TODO：use more elegant way to distinguish loading modules
         if obj_cls is not None and obj_cls in (LoadImageFromFile,
-                                               LoadAnnotations,
-                                               LoadPanopticAnnotations):
+            LoadAnnotations, LoadPanopticAnnotations):
             loading_pipeline_cfg.append(cfg)
-    assert len(loading_pipeline_cfg) == 2, \
-        'The data pipeline in your config file must include ' \
-        'loading image and annotations related pipeline.'
+    assert len(loading_pipeline_cfg
+        ) == 2, 'The data pipeline in your config file must include loading image and annotations related pipeline.'
     return loading_pipeline_cfg
 
 
@@ -116,6 +108,7 @@ def get_loading_pipeline(pipeline):
 class NumClassCheckHook(Hook):
 
     def _check_head(self, runner):
+        print('Filip YuNet Minify: Function fidx=2 _check_head called in mmdet/datasets/utils.py:L118 ')
         """Check whether the `num_classes` in head matches the length of
         `CLASSES` in `dataset`.
 
@@ -126,28 +119,19 @@ class NumClassCheckHook(Hook):
         dataset = runner.data_loader.dataset
         if dataset.CLASSES is None:
             runner.logger.warning(
-                f'Please set `CLASSES` '
-                f'in the {dataset.__class__.__name__} and'
-                f'check if it is consistent with the `num_classes` '
-                f'of head')
+                f'Please set `CLASSES` in the {dataset.__class__.__name__} andcheck if it is consistent with the `num_classes` of head'
+                )
         else:
-            assert type(dataset.CLASSES) is not str, \
-                (f'`CLASSES` in {dataset.__class__.__name__}'
-                 f'should be a tuple of str.'
-                 f'Add comma if number of classes is 1 as '
-                 f'CLASSES = ({dataset.CLASSES},)')
+            assert type(dataset.CLASSES
+                ) is not str, f'`CLASSES` in {dataset.__class__.__name__}should be a tuple of str.Add comma if number of classes is 1 as CLASSES = ({dataset.CLASSES},)'
             for name, module in model.named_modules():
-                if hasattr(module,
-                           'num_classes') and not isinstance(module, (VGG)):
-                    assert module.num_classes == len(dataset.CLASSES), \
-                        (f'The `num_classes` ({module.num_classes}) in '
-                         f'{module.__class__.__name__} of '
-                         f'{model.__class__.__name__} does not matches '
-                         f'the length of `CLASSES` '
-                         f'{len(dataset.CLASSES)}) in '
-                         f'{dataset.__class__.__name__}')
+                if hasattr(module, 'num_classes') and not isinstance(module,
+                    VGG):
+                    assert module.num_classes == len(dataset.CLASSES
+                        ), f'The `num_classes` ({module.num_classes}) in {module.__class__.__name__} of {model.__class__.__name__} does not matches the length of `CLASSES` {len(dataset.CLASSES)}) in {dataset.__class__.__name__}'
 
     def before_train_epoch(self, runner):
+        print('Filip YuNet Minify: Function fidx=3 before_train_epoch called in mmdet/datasets/utils.py:L150 ')
         """Check whether the training dataset is compatible with head.
 
         Args:
@@ -156,6 +140,7 @@ class NumClassCheckHook(Hook):
         self._check_head(runner)
 
     def before_val_epoch(self, runner):
+        print('Filip YuNet Minify: Function fidx=4 before_val_epoch called in mmdet/datasets/utils.py:L158 ')
         """Check whether the dataset in val epoch is compatible with head.
 
         Args:

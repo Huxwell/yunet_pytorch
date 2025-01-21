@@ -1,8 +1,8 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
 
 def images_to_levels(target, num_levels):
+    print('Filip YuNet Minify: Function fidx=0 images_to_levels called in mmdet/core/anchor/utils.py:L5 ')
     """Convert targets by image to targets by feature level.
 
     [target_img0, target_img1] -> [target_level0, target_level1, ...]
@@ -12,16 +12,14 @@ def images_to_levels(target, num_levels):
     start = 0
     for n in num_levels:
         end = start + n
-        # level_targets.append(target[:, start:end].squeeze(0))
         level_targets.append(target[:, start:end])
         start = end
     return level_targets
 
 
-def anchor_inside_flags(flat_anchors,
-                        valid_flags,
-                        img_shape,
-                        allowed_border=0):
+def anchor_inside_flags(flat_anchors, valid_flags, img_shape, allowed_border=0
+    ):
+    print('Filip YuNet Minify: Function fidx=1 anchor_inside_flags called in mmdet/core/anchor/utils.py:L21 ')
     """Check whether the anchors are inside the border.
 
     Args:
@@ -32,22 +30,21 @@ def anchor_inside_flags(flat_anchors,
             Defaults to 0.
 
     Returns:
-        torch.Tensor: Flags indicating whether the anchors are inside a \
-            valid range.
+        torch.Tensor: Flags indicating whether the anchors are inside a             valid range.
     """
     img_h, img_w = img_shape[:2]
     if allowed_border >= 0:
-        inside_flags = valid_flags & \
-            (flat_anchors[:, 0] >= -allowed_border) & \
-            (flat_anchors[:, 1] >= -allowed_border) & \
-            (flat_anchors[:, 2] < img_w + allowed_border) & \
-            (flat_anchors[:, 3] < img_h + allowed_border)
+        inside_flags = valid_flags & (flat_anchors[:, (0)] >= -allowed_border
+            ) & (flat_anchors[:, (1)] >= -allowed_border) & (flat_anchors[:,
+            (2)] < img_w + allowed_border) & (flat_anchors[:, (3)] < img_h +
+            allowed_border)
     else:
         inside_flags = valid_flags
     return inside_flags
 
 
 def calc_region(bbox, ratio, featmap_size=None):
+    print('Filip YuNet Minify: Function fidx=2 calc_region called in mmdet/core/anchor/utils.py:L50 ')
     """Calculate a proportional bbox region.
 
     The bbox center are fixed and the new h' and w' is h * ratio and w * ratio.
@@ -69,4 +66,4 @@ def calc_region(bbox, ratio, featmap_size=None):
         y1 = y1.clamp(min=0, max=featmap_size[0])
         x2 = x2.clamp(min=0, max=featmap_size[1])
         y2 = y2.clamp(min=0, max=featmap_size[0])
-    return (x1, y1, x2, y2)
+    return x1, y1, x2, y2

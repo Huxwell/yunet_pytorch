@@ -1,20 +1,14 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 from abc import ABCMeta, abstractmethod
-
 import torch
-
 from .sampling_result import SamplingResult
 
 
 class BaseSampler(metaclass=ABCMeta):
     """Base class of samplers."""
 
-    def __init__(self,
-                 num,
-                 pos_fraction,
-                 neg_pos_ub=-1,
-                 add_gt_as_proposals=True,
-                 **kwargs):
+    def __init__(self, num, pos_fraction, neg_pos_ub=-1,
+        add_gt_as_proposals=True, **kwargs):
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/core/bbox/samplers/base_sampler.py:L12 ')
         self.num = num
         self.pos_fraction = pos_fraction
         self.neg_pos_ub = neg_pos_ub
@@ -24,20 +18,17 @@ class BaseSampler(metaclass=ABCMeta):
 
     @abstractmethod
     def _sample_pos(self, assign_result, num_expected, **kwargs):
+        print('Filip YuNet Minify: Function fidx=1 _sample_pos called in mmdet/core/bbox/samplers/base_sampler.py:L26 ')
         """Sample positive samples."""
-        pass
 
     @abstractmethod
     def _sample_neg(self, assign_result, num_expected, **kwargs):
+        print('Filip YuNet Minify: Function fidx=2 _sample_neg called in mmdet/core/bbox/samplers/base_sampler.py:L31 ')
         """Sample negative samples."""
-        pass
 
-    def sample(self,
-               assign_result,
-               bboxes,
-               gt_bboxes,
-               gt_labels=None,
-               **kwargs):
+    def sample(self, assign_result, bboxes, gt_bboxes, gt_labels=None, **kwargs
+        ):
+        print('Filip YuNet Minify: Function fidx=3 sample called in mmdet/core/bbox/samplers/base_sampler.py:L35 ')
         """Sample positive and negative bboxes.
 
         This is a simple implementation of bbox sampling given candidates,
@@ -66,11 +57,9 @@ class BaseSampler(metaclass=ABCMeta):
             >>> self = self.sample(assign_result, bboxes, gt_bboxes, gt_labels)
         """
         if len(bboxes.shape) < 2:
-            bboxes = bboxes[None, :]
-
+            bboxes = bboxes[(None), :]
         bboxes = bboxes[:, :4]
-
-        gt_flags = bboxes.new_zeros((bboxes.shape[0], ), dtype=torch.uint8)
+        gt_flags = bboxes.new_zeros((bboxes.shape[0],), dtype=torch.uint8)
         if self.add_gt_as_proposals and len(gt_bboxes) > 0:
             if gt_labels is None:
                 raise ValueError(
@@ -79,12 +68,9 @@ class BaseSampler(metaclass=ABCMeta):
             assign_result.add_gt_(gt_labels)
             gt_ones = bboxes.new_ones(gt_bboxes.shape[0], dtype=torch.uint8)
             gt_flags = torch.cat([gt_ones, gt_flags])
-
         num_expected_pos = int(self.num * self.pos_fraction)
-        pos_inds = self.pos_sampler._sample_pos(
-            assign_result, num_expected_pos, bboxes=bboxes, **kwargs)
-        # We found that sampled indices have duplicated items occasionally.
-        # (may be a bug of PyTorch)
+        pos_inds = self.pos_sampler._sample_pos(assign_result,
+            num_expected_pos, bboxes=bboxes, **kwargs)
         pos_inds = pos_inds.unique()
         num_sampled_pos = pos_inds.numel()
         num_expected_neg = self.num - num_sampled_pos
@@ -93,10 +79,9 @@ class BaseSampler(metaclass=ABCMeta):
             neg_upper_bound = int(self.neg_pos_ub * _pos)
             if num_expected_neg > neg_upper_bound:
                 num_expected_neg = neg_upper_bound
-        neg_inds = self.neg_sampler._sample_neg(
-            assign_result, num_expected_neg, bboxes=bboxes, **kwargs)
+        neg_inds = self.neg_sampler._sample_neg(assign_result,
+            num_expected_neg, bboxes=bboxes, **kwargs)
         neg_inds = neg_inds.unique()
-
-        sampling_result = SamplingResult(pos_inds, neg_inds, bboxes, gt_bboxes,
-                                         assign_result, gt_flags)
+        sampling_result = SamplingResult(pos_inds, neg_inds, bboxes,
+            gt_bboxes, assign_result, gt_flags)
         return sampling_result

@@ -1,4 +1,3 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import torch
 import torch.nn as nn
@@ -25,34 +24,24 @@ class SELayer(BaseModule):
             Default: None
     """
 
-    def __init__(self,
-                 channels,
-                 ratio=16,
-                 conv_cfg=None,
-                 act_cfg=(dict(type='ReLU'), dict(type='Sigmoid')),
-                 init_cfg=None):
+    def __init__(self, channels, ratio=16, conv_cfg=None, act_cfg=(dict(
+        type='ReLU'), dict(type='Sigmoid')), init_cfg=None):
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/models/utils/se_layer.py:L28 ')
         super(SELayer, self).__init__(init_cfg)
         if isinstance(act_cfg, dict):
-            act_cfg = (act_cfg, act_cfg)
+            act_cfg = act_cfg, act_cfg
         assert len(act_cfg) == 2
         assert mmcv.is_tuple_of(act_cfg, dict)
         self.global_avgpool = nn.AdaptiveAvgPool2d(1)
-        self.conv1 = ConvModule(
-            in_channels=channels,
-            out_channels=int(channels / ratio),
-            kernel_size=1,
-            stride=1,
-            conv_cfg=conv_cfg,
+        self.conv1 = ConvModule(in_channels=channels, out_channels=int(
+            channels / ratio), kernel_size=1, stride=1, conv_cfg=conv_cfg,
             act_cfg=act_cfg[0])
-        self.conv2 = ConvModule(
-            in_channels=int(channels / ratio),
-            out_channels=channels,
-            kernel_size=1,
-            stride=1,
-            conv_cfg=conv_cfg,
-            act_cfg=act_cfg[1])
+        self.conv2 = ConvModule(in_channels=int(channels / ratio),
+            out_channels=channels, kernel_size=1, stride=1, conv_cfg=
+            conv_cfg, act_cfg=act_cfg[1])
 
     def forward(self, x):
+        print('Filip YuNet Minify: Function fidx=1 forward called in mmdet/models/utils/se_layer.py:L55 ')
         out = self.global_avgpool(x)
         out = self.conv1(out)
         out = self.conv2(out)
@@ -85,43 +74,33 @@ class DyReLU(BaseModule):
             Default: None
     """
 
-    def __init__(self,
-                 channels,
-                 ratio=4,
-                 conv_cfg=None,
-                 act_cfg=(dict(type='ReLU'),
-                          dict(type='HSigmoid', bias=3.0, divisor=6.0)),
-                 init_cfg=None):
+    def __init__(self, channels, ratio=4, conv_cfg=None, act_cfg=(dict(type
+        ='ReLU'), dict(type='HSigmoid', bias=3.0, divisor=6.0)), init_cfg=None
+        ):
+        print('Filip YuNet Minify: Function fidx=2 __init__ called in mmdet/models/utils/se_layer.py:L88 ')
         super().__init__(init_cfg=init_cfg)
         if isinstance(act_cfg, dict):
-            act_cfg = (act_cfg, act_cfg)
+            act_cfg = act_cfg, act_cfg
         assert len(act_cfg) == 2
         assert mmcv.is_tuple_of(act_cfg, dict)
         self.channels = channels
-        self.expansion = 4  # for a1, b1, a2, b2
+        self.expansion = 4
         self.global_avgpool = nn.AdaptiveAvgPool2d(1)
-        self.conv1 = ConvModule(
-            in_channels=channels,
-            out_channels=int(channels / ratio),
-            kernel_size=1,
-            stride=1,
-            conv_cfg=conv_cfg,
+        self.conv1 = ConvModule(in_channels=channels, out_channels=int(
+            channels / ratio), kernel_size=1, stride=1, conv_cfg=conv_cfg,
             act_cfg=act_cfg[0])
-        self.conv2 = ConvModule(
-            in_channels=int(channels / ratio),
-            out_channels=channels * self.expansion,
-            kernel_size=1,
-            stride=1,
-            conv_cfg=conv_cfg,
-            act_cfg=act_cfg[1])
+        self.conv2 = ConvModule(in_channels=int(channels / ratio),
+            out_channels=channels * self.expansion, kernel_size=1, stride=1,
+            conv_cfg=conv_cfg, act_cfg=act_cfg[1])
 
     def forward(self, x):
+        print('Filip YuNet Minify: Function fidx=3 forward called in mmdet/models/utils/se_layer.py:L118 ')
         """Forward function."""
         coeffs = self.global_avgpool(x)
         coeffs = self.conv1(coeffs)
-        coeffs = self.conv2(coeffs) - 0.5  # value range: [-0.5, 0.5]
+        coeffs = self.conv2(coeffs) - 0.5
         a1, b1, a2, b2 = torch.split(coeffs, self.channels, dim=1)
-        a1 = a1 * 2.0 + 1.0  # [-1.0, 1.0] + 1.0
-        a2 = a2 * 2.0  # [-1.0, 1.0]
+        a1 = a1 * 2.0 + 1.0
+        a2 = a2 * 2.0
         out = torch.max(x * a1 + b1, x * a2 + b2)
         return out

@@ -1,8 +1,6 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 import torch
-
 from ..builder import BBOX_CODERS
 from .base_bbox_coder import BaseBBoxCoder
 
@@ -31,14 +29,15 @@ class LegacyDeltaXYWHBBoxCoder(BaseBBoxCoder):
             target for delta coordinates
     """
 
-    def __init__(self,
-                 target_means=(0., 0., 0., 0.),
-                 target_stds=(1., 1., 1., 1.)):
+    def __init__(self, target_means=(0.0, 0.0, 0.0, 0.0), target_stds=(1.0,
+        1.0, 1.0, 1.0)):
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/core/bbox/coder/legacy_delta_xywh_bbox_coder.py:L34 ')
         super(BaseBBoxCoder, self).__init__()
         self.means = target_means
         self.stds = target_stds
 
     def encode(self, bboxes, gt_bboxes):
+        print('Filip YuNet Minify: Function fidx=1 encode called in mmdet/core/bbox/coder/legacy_delta_xywh_bbox_coder.py:L41 ')
         """Get box regression transformation deltas that can be used to
         transform the ``bboxes`` into the ``gt_bboxes``.
 
@@ -53,14 +52,12 @@ class LegacyDeltaXYWHBBoxCoder(BaseBBoxCoder):
         assert bboxes.size(0) == gt_bboxes.size(0)
         assert bboxes.size(-1) == gt_bboxes.size(-1) == 4
         encoded_bboxes = legacy_bbox2delta(bboxes, gt_bboxes, self.means,
-                                           self.stds)
+            self.stds)
         return encoded_bboxes
 
-    def decode(self,
-               bboxes,
-               pred_bboxes,
-               max_shape=None,
-               wh_ratio_clip=16 / 1000):
+    def decode(self, bboxes, pred_bboxes, max_shape=None, wh_ratio_clip=16 /
+        1000):
+        print('Filip YuNet Minify: Function fidx=2 decode called in mmdet/core/bbox/coder/legacy_delta_xywh_bbox_coder.py:L59 ')
         """Apply transformation `pred_bboxes` to `boxes`.
 
         Args:
@@ -76,16 +73,14 @@ class LegacyDeltaXYWHBBoxCoder(BaseBBoxCoder):
         """
         assert pred_bboxes.size(0) == bboxes.size(0)
         decoded_bboxes = legacy_delta2bbox(bboxes, pred_bboxes, self.means,
-                                           self.stds, max_shape, wh_ratio_clip)
-
+            self.stds, max_shape, wh_ratio_clip)
         return decoded_bboxes
 
 
 @mmcv.jit(coderize=True)
-def legacy_bbox2delta(proposals,
-                      gt,
-                      means=(0., 0., 0., 0.),
-                      stds=(1., 1., 1., 1.)):
+def legacy_bbox2delta(proposals, gt, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0,
+    1.0, 1.0, 1.0)):
+    print('Filip YuNet Minify: Function fidx=3 legacy_bbox2delta called in mmdet/core/bbox/coder/legacy_delta_xywh_bbox_coder.py:L85 ')
     """Compute deltas of proposals w.r.t. gt in the MMDet V1.x manner.
 
     We usually compute the deltas of x, y, w, h of proposals w.r.t ground
@@ -104,39 +99,31 @@ def legacy_bbox2delta(proposals,
             dw, dh.
     """
     assert proposals.size() == gt.size()
-
     proposals = proposals.float()
     gt = gt.float()
     px = (proposals[..., 0] + proposals[..., 2]) * 0.5
     py = (proposals[..., 1] + proposals[..., 3]) * 0.5
     pw = proposals[..., 2] - proposals[..., 0] + 1.0
     ph = proposals[..., 3] - proposals[..., 1] + 1.0
-
     gx = (gt[..., 0] + gt[..., 2]) * 0.5
     gy = (gt[..., 1] + gt[..., 3]) * 0.5
     gw = gt[..., 2] - gt[..., 0] + 1.0
     gh = gt[..., 3] - gt[..., 1] + 1.0
-
     dx = (gx - px) / pw
     dy = (gy - py) / ph
     dw = torch.log(gw / pw)
     dh = torch.log(gh / ph)
     deltas = torch.stack([dx, dy, dw, dh], dim=-1)
-
     means = deltas.new_tensor(means).unsqueeze(0)
     stds = deltas.new_tensor(stds).unsqueeze(0)
     deltas = deltas.sub_(means).div_(stds)
-
     return deltas
 
 
 @mmcv.jit(coderize=True)
-def legacy_delta2bbox(rois,
-                      deltas,
-                      means=(0., 0., 0., 0.),
-                      stds=(1., 1., 1., 1.),
-                      max_shape=None,
-                      wh_ratio_clip=16 / 1000):
+def legacy_delta2bbox(rois, deltas, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 
+    1.0, 1.0, 1.0), max_shape=None, wh_ratio_clip=16 / 1000):
+    print('Filip YuNet Minify: Function fidx=4 legacy_delta2bbox called in mmdet/core/bbox/coder/legacy_delta_xywh_bbox_coder.py:L134 ')
     """Apply deltas to shift/scale base boxes in the MMDet V1.x manner.
 
     Typically the rois are anchor or proposed bounding boxes and the deltas are
@@ -186,23 +173,14 @@ def legacy_delta2bbox(rois,
     max_ratio = np.abs(np.log(wh_ratio_clip))
     dw = dw.clamp(min=-max_ratio, max=max_ratio)
     dh = dh.clamp(min=-max_ratio, max=max_ratio)
-    # Compute center of each roi
-    px = ((rois[:, 0] + rois[:, 2]) * 0.5).unsqueeze(1).expand_as(dx)
-    py = ((rois[:, 1] + rois[:, 3]) * 0.5).unsqueeze(1).expand_as(dy)
-    # Compute width/height of each roi
-    pw = (rois[:, 2] - rois[:, 0] + 1.0).unsqueeze(1).expand_as(dw)
-    ph = (rois[:, 3] - rois[:, 1] + 1.0).unsqueeze(1).expand_as(dh)
-    # Use exp(network energy) to enlarge/shrink each roi
+    px = ((rois[:, (0)] + rois[:, (2)]) * 0.5).unsqueeze(1).expand_as(dx)
+    py = ((rois[:, (1)] + rois[:, (3)]) * 0.5).unsqueeze(1).expand_as(dy)
+    pw = (rois[:, (2)] - rois[:, (0)] + 1.0).unsqueeze(1).expand_as(dw)
+    ph = (rois[:, (3)] - rois[:, (1)] + 1.0).unsqueeze(1).expand_as(dh)
     gw = pw * dw.exp()
     gh = ph * dh.exp()
-    # Use network energy to shift the center of each roi
     gx = px + pw * dx
     gy = py + ph * dy
-    # Convert center-xy/width/height to top-left, bottom-right
-
-    # The true legacy box coder should +- 0.5 here.
-    # However, current implementation improves the performance when testing
-    # the models trained in MMDetection 1.X (~0.5 bbox AP, 0.2 mask AP)
     x1 = gx - gw * 0.5
     y1 = gy - gh * 0.5
     x2 = gx + gw * 0.5

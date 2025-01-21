@@ -1,7 +1,5 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 import torch.nn.functional as F
-
 from mmdet.core.bbox.iou_calculators import bbox_overlaps
 from mmdet.core.bbox.transforms import bbox_cxcywh_to_xyxy, bbox_xyxy_to_cxcywh
 from .builder import MATCH_COST
@@ -26,12 +24,14 @@ class BBoxL1Cost:
          tensor([[1.6172, 1.6422]])
     """
 
-    def __init__(self, weight=1., box_format='xyxy'):
+    def __init__(self, weight=1.0, box_format='xyxy'):
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/core/bbox/match_costs/match_cost.py:L29 ')
         self.weight = weight
         assert box_format in ['xyxy', 'xywh']
         self.box_format = box_format
 
     def __call__(self, bbox_pred, gt_bboxes):
+        print('Filip YuNet Minify: Function fidx=1 __call__ called in mmdet/core/bbox/match_costs/match_cost.py:L34 ')
         """
         Args:
             bbox_pred (Tensor): Predicted boxes with normalized coordinates
@@ -77,12 +77,9 @@ class FocalLossCost:
                 [-0.1950, -0.1207, -0.2626]])
     """
 
-    def __init__(self,
-                 weight=1.,
-                 alpha=0.25,
-                 gamma=2,
-                 eps=1e-12,
-                 binary_input=False):
+    def __init__(self, weight=1.0, alpha=0.25, gamma=2, eps=1e-12,
+        binary_input=False):
+        print('Filip YuNet Minify: Function fidx=2 __init__ called in mmdet/core/bbox/match_costs/match_cost.py:L80 ')
         self.weight = weight
         self.alpha = alpha
         self.gamma = gamma
@@ -90,6 +87,7 @@ class FocalLossCost:
         self.binary_input = binary_input
 
     def _focal_loss_cost(self, cls_pred, gt_labels):
+        print('Filip YuNet Minify: Function fidx=3 _focal_loss_cost called in mmdet/core/bbox/match_costs/match_cost.py:L92 ')
         """
         Args:
             cls_pred (Tensor): Predicted classification logits, shape
@@ -100,15 +98,15 @@ class FocalLossCost:
             torch.Tensor: cls_cost value with weight
         """
         cls_pred = cls_pred.sigmoid()
-        neg_cost = -(1 - cls_pred + self.eps).log() * (
-            1 - self.alpha) * cls_pred.pow(self.gamma)
-        pos_cost = -(cls_pred + self.eps).log() * self.alpha * (
-            1 - cls_pred).pow(self.gamma)
-
-        cls_cost = pos_cost[:, gt_labels] - neg_cost[:, gt_labels]
+        neg_cost = -(1 - cls_pred + self.eps).log() * (1 - self.alpha
+            ) * cls_pred.pow(self.gamma)
+        pos_cost = -(cls_pred + self.eps).log() * self.alpha * (1 - cls_pred
+            ).pow(self.gamma)
+        cls_cost = pos_cost[:, (gt_labels)] - neg_cost[:, (gt_labels)]
         return cls_cost * self.weight
 
     def _mask_focal_loss_cost(self, cls_pred, gt_labels):
+        print('Filip YuNet Minify: Function fidx=4 _mask_focal_loss_cost called in mmdet/core/bbox/match_costs/match_cost.py:L111 ')
         """
         Args:
             cls_pred (Tensor): Predicted classfication logits
@@ -117,31 +115,29 @@ class FocalLossCost:
                 dtype=torch.long. Labels should be binary.
 
         Returns:
-            Tensor: Focal cost matrix with weight in shape\
-                (num_query, num_gt).
+            Tensor: Focal cost matrix with weight in shape                (num_query, num_gt).
         """
         cls_pred = cls_pred.flatten(1)
         gt_labels = gt_labels.flatten(1).float()
         n = cls_pred.shape[1]
         cls_pred = cls_pred.sigmoid()
-        neg_cost = -(1 - cls_pred + self.eps).log() * (
-            1 - self.alpha) * cls_pred.pow(self.gamma)
-        pos_cost = -(cls_pred + self.eps).log() * self.alpha * (
-            1 - cls_pred).pow(self.gamma)
-
-        cls_cost = torch.einsum('nc,mc->nm', pos_cost, gt_labels) + \
-            torch.einsum('nc,mc->nm', neg_cost, (1 - gt_labels))
+        neg_cost = -(1 - cls_pred + self.eps).log() * (1 - self.alpha
+            ) * cls_pred.pow(self.gamma)
+        pos_cost = -(cls_pred + self.eps).log() * self.alpha * (1 - cls_pred
+            ).pow(self.gamma)
+        cls_cost = torch.einsum('nc,mc->nm', pos_cost, gt_labels
+            ) + torch.einsum('nc,mc->nm', neg_cost, 1 - gt_labels)
         return cls_cost / n * self.weight
 
     def __call__(self, cls_pred, gt_labels):
+        print('Filip YuNet Minify: Function fidx=5 __call__ called in mmdet/core/bbox/match_costs/match_cost.py:L136 ')
         """
         Args:
             cls_pred (Tensor): Predicted classfication logits.
             gt_labels (Tensor)): Labels.
 
         Returns:
-            Tensor: Focal cost matrix with weight in shape\
-                (num_query, num_gt).
+            Tensor: Focal cost matrix with weight in shape                (num_query, num_gt).
         """
         if self.binary_input:
             return self._mask_focal_loss_cost(cls_pred, gt_labels)
@@ -157,8 +153,7 @@ class ClassificationCost:
          weight (int | float, optional): loss_weight
 
      Examples:
-         >>> from mmdet.core.bbox.match_costs.match_cost import \
-         ... ClassificationCost
+         >>> from mmdet.core.bbox.match_costs.match_cost import          ... ClassificationCost
          >>> import torch
          >>> self = ClassificationCost()
          >>> cls_pred = torch.rand(4, 3)
@@ -171,10 +166,12 @@ class ClassificationCost:
                 [-0.3343, -0.2701, -0.3956]])
     """
 
-    def __init__(self, weight=1.):
+    def __init__(self, weight=1.0):
+        print('Filip YuNet Minify: Function fidx=6 __init__ called in mmdet/core/bbox/match_costs/match_cost.py:L174 ')
         self.weight = weight
 
     def __call__(self, cls_pred, gt_labels):
+        print('Filip YuNet Minify: Function fidx=7 __call__ called in mmdet/core/bbox/match_costs/match_cost.py:L177 ')
         """
         Args:
             cls_pred (Tensor): Predicted classification logits, shape
@@ -184,12 +181,8 @@ class ClassificationCost:
         Returns:
             torch.Tensor: cls_cost value with weight
         """
-        # Following the official DETR repo, contrary to the loss that
-        # NLL is used, we approximate it in 1 - cls_score[gt_label].
-        # The 1 is a constant that doesn't change the matching,
-        # so it can be omitted.
         cls_score = cls_pred.softmax(-1)
-        cls_cost = -cls_score[:, gt_labels]
+        cls_cost = -cls_score[:, (gt_labels)]
         return cls_cost * self.weight
 
 
@@ -212,11 +205,13 @@ class IoUCost:
                 [ 0.1667, -0.5000]])
     """
 
-    def __init__(self, iou_mode='giou', weight=1.):
+    def __init__(self, iou_mode='giou', weight=1.0):
+        print('Filip YuNet Minify: Function fidx=8 __init__ called in mmdet/core/bbox/match_costs/match_cost.py:L215 ')
         self.weight = weight
         self.iou_mode = iou_mode
 
     def __call__(self, bboxes, gt_bboxes):
+        print('Filip YuNet Minify: Function fidx=9 __call__ called in mmdet/core/bbox/match_costs/match_cost.py:L219 ')
         """
         Args:
             bboxes (Tensor): Predicted boxes with unnormalized coordinates
@@ -227,10 +222,8 @@ class IoUCost:
         Returns:
             torch.Tensor: iou_cost value with weight
         """
-        # overlaps: [num_bboxes, num_gt]
-        overlaps = bbox_overlaps(
-            bboxes, gt_bboxes, mode=self.iou_mode, is_aligned=False)
-        # The 1 is a constant that doesn't change the matching, so omitted.
+        overlaps = bbox_overlaps(bboxes, gt_bboxes, mode=self.iou_mode,
+            is_aligned=False)
         iou_cost = -overlaps
         return iou_cost * self.weight
 
@@ -251,13 +244,15 @@ class DiceCost:
             Defaults to True.
     """
 
-    def __init__(self, weight=1., pred_act=False, eps=1e-3, naive_dice=True):
+    def __init__(self, weight=1.0, pred_act=False, eps=0.001, naive_dice=True):
+        print('Filip YuNet Minify: Function fidx=10 __init__ called in mmdet/core/bbox/match_costs/match_cost.py:L254 ')
         self.weight = weight
         self.pred_act = pred_act
         self.eps = eps
         self.naive_dice = naive_dice
 
     def binary_mask_dice_loss(self, mask_preds, gt_masks):
+        print('Filip YuNet Minify: Function fidx=11 binary_mask_dice_loss called in mmdet/core/bbox/match_costs/match_cost.py:L260 ')
         """
         Args:
             mask_preds (Tensor): Mask prediction in shape (num_query, *).
@@ -272,15 +267,16 @@ class DiceCost:
         gt_masks = gt_masks.flatten(1).float()
         numerator = 2 * torch.einsum('nc,mc->nm', mask_preds, gt_masks)
         if self.naive_dice:
-            denominator = mask_preds.sum(-1)[:, None] + \
-                gt_masks.sum(-1)[None, :]
+            denominator = mask_preds.sum(-1)[:, (None)] + gt_masks.sum(-1)[(
+                None), :]
         else:
-            denominator = mask_preds.pow(2).sum(1)[:, None] + \
-                gt_masks.pow(2).sum(1)[None, :]
+            denominator = mask_preds.pow(2).sum(1)[:, (None)] + gt_masks.pow(2
+                ).sum(1)[(None), :]
         loss = 1 - (numerator + self.eps) / (denominator + self.eps)
         return loss
 
     def __call__(self, mask_preds, gt_masks):
+        print('Filip YuNet Minify: Function fidx=12 __call__ called in mmdet/core/bbox/match_costs/match_cost.py:L283 ')
         """
         Args:
             mask_preds (Tensor): Mask prediction logits in shape (num_query, *)
@@ -312,12 +308,14 @@ class CrossEntropyLossCost:
          >>> print(bce(cls_pred, gt_labels))
     """
 
-    def __init__(self, weight=1., use_sigmoid=True):
+    def __init__(self, weight=1.0, use_sigmoid=True):
+        print('Filip YuNet Minify: Function fidx=13 __init__ called in mmdet/core/bbox/match_costs/match_cost.py:L315 ')
         assert use_sigmoid, 'use_sigmoid = False is not supported yet.'
         self.weight = weight
         self.use_sigmoid = use_sigmoid
 
     def _binary_cross_entropy(self, cls_pred, gt_labels):
+        print('Filip YuNet Minify: Function fidx=14 _binary_cross_entropy called in mmdet/core/bbox/match_costs/match_cost.py:L320 ')
         """
         Args:
             cls_pred (Tensor): The prediction with shape (num_query, 1, *) or
@@ -331,17 +329,17 @@ class CrossEntropyLossCost:
         cls_pred = cls_pred.flatten(1).float()
         gt_labels = gt_labels.flatten(1).float()
         n = cls_pred.shape[1]
-        pos = F.binary_cross_entropy_with_logits(
-            cls_pred, torch.ones_like(cls_pred), reduction='none')
-        neg = F.binary_cross_entropy_with_logits(
-            cls_pred, torch.zeros_like(cls_pred), reduction='none')
-        cls_cost = torch.einsum('nc,mc->nm', pos, gt_labels) + \
-            torch.einsum('nc,mc->nm', neg, 1 - gt_labels)
+        pos = F.binary_cross_entropy_with_logits(cls_pred, torch.ones_like(
+            cls_pred), reduction='none')
+        neg = F.binary_cross_entropy_with_logits(cls_pred, torch.zeros_like
+            (cls_pred), reduction='none')
+        cls_cost = torch.einsum('nc,mc->nm', pos, gt_labels) + torch.einsum(
+            'nc,mc->nm', neg, 1 - gt_labels)
         cls_cost = cls_cost / n
-
         return cls_cost
 
     def __call__(self, cls_pred, gt_labels):
+        print('Filip YuNet Minify: Function fidx=15 __call__ called in mmdet/core/bbox/match_costs/match_cost.py:L344 ')
         """
         Args:
             cls_pred (Tensor): Predicted classification logits.
@@ -355,5 +353,4 @@ class CrossEntropyLossCost:
             cls_cost = self._binary_cross_entropy(cls_pred, gt_labels)
         else:
             raise NotImplementedError
-
         return cls_cost * self.weight
