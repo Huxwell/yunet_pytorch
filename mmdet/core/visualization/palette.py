@@ -1,9 +1,9 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import numpy as np
 
 
 def palette_val(palette):
+    print('Filip YuNet Minify: Function fidx=0 palette_val called in mmdet/core/visualization/palette.py:L6 ')
     """Convert palette to matplotlib palette.
 
     Args:
@@ -14,12 +14,13 @@ def palette_val(palette):
     """
     new_palette = []
     for color in palette:
-        color = [c / 255 for c in color]
+        color = [(c / 255) for c in color]
         new_palette.append(tuple(color))
     return new_palette
 
 
 def get_palette(palette, num_classes):
+    print('Filip YuNet Minify: Function fidx=1 get_palette called in mmdet/core/visualization/palette.py:L22 ')
     """Get palette from various inputs.
 
     Args:
@@ -30,14 +31,12 @@ def get_palette(palette, num_classes):
         list[tuple[int]]: A list of color tuples.
     """
     assert isinstance(num_classes, int)
-
     if isinstance(palette, list):
         dataset_palette = palette
     elif isinstance(palette, tuple):
         dataset_palette = [palette] * num_classes
     elif palette == 'random' or palette is None:
         state = np.random.get_state()
-        # random color
         np.random.seed(42)
         palette = np.random.randint(0, 256, size=(num_classes, 3))
         np.random.set_state(state)
@@ -57,7 +56,6 @@ def get_palette(palette, num_classes):
         dataset_palette = [mmcv.color_val(palette)[::-1]] * num_classes
     else:
         raise TypeError(f'Invalid type for palette: {type(palette)}')
-
-    assert len(dataset_palette) >= num_classes, \
-        'The length of palette should not be less than `num_classes`.'
+    assert len(dataset_palette
+        ) >= num_classes, 'The length of palette should not be less than `num_classes`.'
     return dataset_palette

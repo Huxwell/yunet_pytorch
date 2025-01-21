@@ -1,10 +1,9 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import os
-
 import torch
 
 
 def dynamic_clip_for_onnx(x1, y1, x2, y2, max_shape):
+    print('Filip YuNet Minify: Function fidx=0 dynamic_clip_for_onnx called in mmdet/core/export/onnx_helper.py:L7 ')
     """Clip boxes dynamically for onnx.
 
     Since torch.clamp cannot have dynamic `min` and `max`, we scale the
@@ -19,23 +18,16 @@ def dynamic_clip_for_onnx(x1, y1, x2, y2, max_shape):
     Returns:
         tuple(Tensor): The clipped x1, y1, x2, y2.
     """
-    assert isinstance(
-        max_shape,
-        torch.Tensor), '`max_shape` should be tensor of (h,w) for onnx'
-
-    # scale by 1/max_shape
+    assert isinstance(max_shape, torch.Tensor
+        ), '`max_shape` should be tensor of (h,w) for onnx'
     x1 = x1 / max_shape[1]
     y1 = y1 / max_shape[0]
     x2 = x2 / max_shape[1]
     y2 = y2 / max_shape[0]
-
-    # clamp [0, 1]
     x1 = torch.clamp(x1, 0, 1)
     y1 = torch.clamp(y1, 0, 1)
     x2 = torch.clamp(x2, 0, 1)
     y2 = torch.clamp(y2, 0, 1)
-
-    # scale back
     x1 = x1 * max_shape[1]
     y1 = y1 * max_shape[0]
     x2 = x2 * max_shape[1]
@@ -44,6 +36,7 @@ def dynamic_clip_for_onnx(x1, y1, x2, y2, max_shape):
 
 
 def get_k_for_topk(k, size):
+    print('Filip YuNet Minify: Function fidx=1 get_k_for_topk called in mmdet/core/export/onnx_helper.py:L46 ')
     """Get k of TopK for onnx exporting.
 
     The K of TopK in TensorRT should not be a Tensor, while in ONNX Runtime
@@ -54,8 +47,7 @@ def get_k_for_topk(k, size):
 
     Args:
         k (int or Tensor): The set k value for nms from config file.
-        size (Tensor or torch.Size): The number of elements of \
-            TopK's input tensor
+        size (Tensor or torch.Size): The number of elements of             TopK's input tensor
     Returns:
         tuple: (int or Tensor): The final K for TopK.
     """
@@ -65,28 +57,21 @@ def get_k_for_topk(k, size):
     if torch.onnx.is_in_onnx_export():
         is_trt_backend = os.environ.get('ONNX_BACKEND') == 'MMCVTensorRT'
         if is_trt_backend:
-            # TensorRT does not support dynamic K with TopK op
             if 0 < k < size:
                 ret_k = k
         else:
-            # Always keep topk op for dynamic input in onnx for ONNX Runtime
             ret_k = torch.where(k < size, k, size)
     elif k < size:
         ret_k = k
     else:
-        # ret_k is -1
         pass
     return ret_k
 
 
-def add_dummy_nms_for_onnx(boxes,
-                           scores,
-                           max_output_boxes_per_class=1000,
-                           iou_threshold=0.5,
-                           score_threshold=0.05,
-                           pre_top_k=-1,
-                           after_top_k=-1,
-                           labels=None):
+def add_dummy_nms_for_onnx(boxes, scores, max_output_boxes_per_class=1000,
+    iou_threshold=0.5, score_threshold=0.05, pre_top_k=-1, after_top_k=-1,
+    labels=None):
+    print('Filip YuNet Minify: Function fidx=2 add_dummy_nms_for_onnx called in mmdet/core/export/onnx_helper.py:L82 ')
     """Create a dummy onnx::NonMaxSuppression op while exporting to ONNX.
 
     This function helps exporting to onnx with batch and multiclass NMS op.
@@ -120,30 +105,24 @@ def add_dummy_nms_for_onnx(boxes,
     score_threshold = torch.tensor([score_threshold], dtype=torch.float32)
     batch_size = scores.shape[0]
     num_class = scores.shape[2]
-
     nms_pre = torch.tensor(pre_top_k, device=scores.device, dtype=torch.long)
     nms_pre = get_k_for_topk(nms_pre, boxes.shape[1])
-
     if nms_pre > 0:
         max_scores, _ = scores.max(-1)
         _, topk_inds = max_scores.topk(nms_pre)
-        batch_inds = torch.arange(batch_size).view(
-            -1, 1).expand_as(topk_inds).long()
-        # Avoid onnx2tensorrt issue in https://github.com/NVIDIA/TensorRT/issues/1134 # noqa: E501
+        batch_inds = torch.arange(batch_size).view(-1, 1).expand_as(topk_inds
+            ).long()
         transformed_inds = boxes.shape[1] * batch_inds + topk_inds
-        boxes = boxes.reshape(-1, 4)[transformed_inds, :].reshape(
-            batch_size, -1, 4)
-        scores = scores.reshape(-1, num_class)[transformed_inds, :].reshape(
+        boxes = boxes.reshape(-1, 4)[(transformed_inds), :].reshape(batch_size,
+            -1, 4)
+        scores = scores.reshape(-1, num_class)[(transformed_inds), :].reshape(
             batch_size, -1, num_class)
         if labels is not None:
-            labels = labels.reshape(-1, 1)[transformed_inds].reshape(
-                batch_size, -1)
-
+            labels = labels.reshape(-1, 1)[transformed_inds].reshape(batch_size
+                , -1)
     scores = scores.permute(0, 2, 1)
     num_box = boxes.shape[1]
-    # turn off tracing to create a dummy output of nms
     state = torch._C._get_tracing_state()
-    # dummy indices of nms's output
     num_fake_det = 2
     batch_inds = torch.randint(batch_size, (num_fake_det, 1))
     cls_inds = torch.randint(num_class, (num_fake_det, 1))
@@ -151,15 +130,11 @@ def add_dummy_nms_for_onnx(boxes,
     indices = torch.cat([batch_inds, cls_inds, box_inds], dim=1)
     output = indices
     setattr(DummyONNXNMSop, 'output', output)
-
-    # open tracing
     torch._C._set_tracing_state(state)
     selected_indices = DummyONNXNMSop.apply(boxes, scores,
-                                            max_output_boxes_per_class,
-                                            iou_threshold, score_threshold)
-
-    batch_inds, cls_inds = selected_indices[:, 0], selected_indices[:, 1]
-    box_inds = selected_indices[:, 2]
+        max_output_boxes_per_class, iou_threshold, score_threshold)
+    batch_inds, cls_inds = selected_indices[:, (0)], selected_indices[:, (1)]
+    box_inds = selected_indices[:, (2)]
     if labels is None:
         labels = torch.arange(num_class, dtype=torch.long).to(scores.device)
         labels = labels.view(1, num_class, 1).expand_as(scores)
@@ -167,32 +142,25 @@ def add_dummy_nms_for_onnx(boxes,
     boxes = boxes.reshape(batch_size, -1).repeat(1, num_class).reshape(-1, 4)
     pos_inds = (num_class * batch_inds + cls_inds) * num_box + box_inds
     mask = scores.new_zeros(scores.shape)
-    # Avoid onnx2tensorrt issue in https://github.com/NVIDIA/TensorRT/issues/1134 # noqa: E501
-    # PyTorch style code: mask[batch_inds, box_inds] += 1
-    mask[pos_inds, :] += 1
+    mask[(pos_inds), :] += 1
     scores = scores * mask
     boxes = boxes * mask
-
     scores = scores.reshape(batch_size, -1)
     boxes = boxes.reshape(batch_size, -1, 4)
     labels = labels.reshape(batch_size, -1)
-
-    nms_after = torch.tensor(
-        after_top_k, device=scores.device, dtype=torch.long)
+    nms_after = torch.tensor(after_top_k, device=scores.device, dtype=torch
+        .long)
     nms_after = get_k_for_topk(nms_after, num_box * num_class)
-
     if nms_after > 0:
         _, topk_inds = scores.topk(nms_after)
         batch_inds = torch.arange(batch_size).view(-1, 1).expand_as(topk_inds)
-        # Avoid onnx2tensorrt issue in https://github.com/NVIDIA/TensorRT/issues/1134 # noqa: E501
         transformed_inds = scores.shape[1] * batch_inds + topk_inds
-        scores = scores.reshape(-1, 1)[transformed_inds, :].reshape(
+        scores = scores.reshape(-1, 1)[(transformed_inds), :].reshape(
             batch_size, -1)
-        boxes = boxes.reshape(-1, 4)[transformed_inds, :].reshape(
-            batch_size, -1, 4)
-        labels = labels.reshape(-1, 1)[transformed_inds, :].reshape(
+        boxes = boxes.reshape(-1, 4)[(transformed_inds), :].reshape(batch_size,
+            -1, 4)
+        labels = labels.reshape(-1, 1)[(transformed_inds), :].reshape(
             batch_size, -1)
-
     scores = scores.unsqueeze(2)
     dets = torch.cat([boxes, scores], dim=2)
     return dets, labels
@@ -205,19 +173,15 @@ class DummyONNXNMSop(torch.autograd.Function):
     """
 
     @staticmethod
-    def forward(ctx, boxes, scores, max_output_boxes_per_class, iou_threshold,
-                score_threshold):
-
+    def forward(ctx, boxes, scores, max_output_boxes_per_class,
+        iou_threshold, score_threshold):
+        print('Filip YuNet Minify: Function fidx=3 forward called in mmdet/core/export/onnx_helper.py:L208 ')
         return DummyONNXNMSop.output
 
     @staticmethod
-    def symbolic(g, boxes, scores, max_output_boxes_per_class, iou_threshold,
-                 score_threshold):
-        return g.op(
-            'NonMaxSuppression',
-            boxes,
-            scores,
-            max_output_boxes_per_class,
-            iou_threshold,
-            score_threshold,
+    def symbolic(g, boxes, scores, max_output_boxes_per_class,
+        iou_threshold, score_threshold):
+        print('Filip YuNet Minify: Function fidx=4 symbolic called in mmdet/core/export/onnx_helper.py:L214 ')
+        return g.op('NonMaxSuppression', boxes, scores,
+            max_output_boxes_per_class, iou_threshold, score_threshold,
             outputs=1)

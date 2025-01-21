@@ -1,17 +1,14 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import csv
 import json
 import os.path as osp
 import warnings
 from collections import OrderedDict, defaultdict
-
 import mmcv
 import numpy as np
 import torch.distributed as dist
 from mmcv.runner import get_dist_info
 from mmcv.utils import print_log
-
 from mmdet.core import eval_map
 from .builder import DATASETS
 from .custom import CustomDataset
@@ -60,37 +57,24 @@ class OpenImagesDataset(CustomDataset):
             Defaults to ``dict(backend='disk')``.
     """
 
-    def __init__(self,
-                 ann_file,
-                 label_file='',
-                 image_level_ann_file='',
-                 get_supercategory=True,
-                 hierarchy_file=None,
-                 get_metas=True,
-                 load_from_file=True,
-                 meta_file='',
-                 filter_labels=True,
-                 load_image_level_labels=True,
-                 file_client_args=dict(backend='disk'),
-                 **kwargs):
-        # may get error if use other file_client
+    def __init__(self, ann_file, label_file='', image_level_ann_file='',
+        get_supercategory=True, hierarchy_file=None, get_metas=True,
+        load_from_file=True, meta_file='', filter_labels=True,
+        load_image_level_labels=True, file_client_args=dict(backend='disk'),
+        **kwargs):
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/datasets/openimages.py:L63 ')
         self.file_client_args = file_client_args
-
         self.cat2label = defaultdict(str)
         self.index_dict = {}
-
-        # Although it will init file_client in `CustomDataset`,
-        # it needs to be init here.
         file_client = mmcv.FileClient(**file_client_args)
-        # need get `index_dict` before load annotations
         assert label_file.endswith('csv')
         if hasattr(file_client, 'get_local_path'):
             with file_client.get_local_path(label_file) as local_path:
                 class_names = self.get_classes_from_csv(local_path)
         else:
             class_names = self.get_classes_from_csv(label_file)
-        super(OpenImagesDataset, self).__init__(
-            ann_file=ann_file, file_client_args=file_client_args, **kwargs)
+        super(OpenImagesDataset, self).__init__(ann_file=ann_file,
+            file_client_args=file_client_args, **kwargs)
         self.CLASSES = class_names
         self.image_level_ann_file = image_level_ann_file
         self.load_image_level_labels = load_image_level_labels
@@ -103,13 +87,13 @@ class OpenImagesDataset(CustomDataset):
             else:
                 raise NotImplementedError
             if hasattr(self.file_client, 'get_local_path'):
-                with self.file_client.get_local_path(
-                        hierarchy_file) as local_path:
-                    self.class_label_tree = self.get_relation_matrix(
-                        local_path)
+                with self.file_client.get_local_path(hierarchy_file
+                    ) as local_path:
+                    self.class_label_tree = self.get_relation_matrix(local_path
+                        )
             else:
-                self.class_label_tree = self.get_relation_matrix(
-                    hierarchy_file)
+                self.class_label_tree = self.get_relation_matrix(hierarchy_file
+                    )
         self.get_supercategory = get_supercategory
         self.get_metas = get_metas
         self.load_from_file = load_from_file
@@ -125,6 +109,7 @@ class OpenImagesDataset(CustomDataset):
         self.load_from_pipeline = False if load_from_file else True
 
     def get_classes_from_csv(self, label_file):
+        print('Filip YuNet Minify: Function fidx=1 get_classes_from_csv called in mmdet/datasets/openimages.py:L127 ')
         """Get classes name from file.
 
         Args:
@@ -135,7 +120,6 @@ class OpenImagesDataset(CustomDataset):
         Returns:
             list[str]: Class name of OpenImages.
         """
-
         index_list = []
         classes_names = []
         with open(label_file, 'r') as f:
@@ -148,6 +132,7 @@ class OpenImagesDataset(CustomDataset):
         return classes_names
 
     def load_annotations(self, ann_file):
+        print('Filip YuNet Minify: Function fidx=2 load_annotations called in mmdet/datasets/openimages.py:L150 ')
         """Load annotation from annotation file.
 
         Special described `self.data_infos` (defaultdict[list[dict]])
@@ -191,33 +176,24 @@ class OpenImagesDataset(CustomDataset):
                 label_id = line[2]
                 assert label_id in self.index_dict
                 label = int(self.index_dict[label_id])
-                bbox = [
-                    float(line[4]),  # xmin
-                    float(line[6]),  # ymin
-                    float(line[5]),  # xmax
-                    float(line[7])  # ymax
-                ]
+                bbox = [float(line[4]), float(line[6]), float(line[5]),
+                    float(line[7])]
                 is_occluded = True if int(line[8]) == 1 else False
                 is_truncated = True if int(line[9]) == 1 else False
                 is_group_of = True if int(line[10]) == 1 else False
                 is_depiction = True if int(line[11]) == 1 else False
                 is_inside = True if int(line[12]) == 1 else False
-
-                self.ann_infos[img_id].append(
-                    dict(
-                        bbox=bbox,
-                        label=label,
-                        is_occluded=is_occluded,
-                        is_truncated=is_truncated,
-                        is_group_of=is_group_of,
-                        is_depiction=is_depiction,
-                        is_inside=is_inside))
+                self.ann_infos[img_id].append(dict(bbox=bbox, label=label,
+                    is_occluded=is_occluded, is_truncated=is_truncated,
+                    is_group_of=is_group_of, is_depiction=is_depiction,
+                    is_inside=is_inside))
                 if filename != cp_filename:
                     data_infos.append(dict(img_id=img_id, filename=filename))
                     cp_filename = filename
         return data_infos
 
     def get_ann_info(self, idx):
+        print('Filip YuNet Minify: Function fidx=3 get_ann_info called in mmdet/datasets/openimages.py:L220 ')
         """Get OpenImages annotation by index.
 
         Args:
@@ -238,16 +214,10 @@ class OpenImagesDataset(CustomDataset):
         is_insides = []
         for obj in self.ann_infos[img_id]:
             label = int(obj['label'])
-            bbox = [
-                float(obj['bbox'][0]),
-                float(obj['bbox'][1]),
-                float(obj['bbox'][2]),
-                float(obj['bbox'][3])
-            ]
+            bbox = [float(obj['bbox'][0]), float(obj['bbox'][1]), float(obj
+                ['bbox'][2]), float(obj['bbox'][3])]
             bboxes.append(bbox)
             labels.append(label)
-
-            # Other parameters
             is_occludeds.append(obj['is_occluded'])
             is_truncateds.append(obj['is_truncated'])
             is_group_ofs.append(obj['is_group_of'])
@@ -255,45 +225,34 @@ class OpenImagesDataset(CustomDataset):
             is_insides.append(obj['is_inside'])
         if not bboxes:
             bboxes = np.zeros((0, 4))
-            labels = np.zeros((0, ))
+            labels = np.zeros((0,))
         else:
             bboxes = np.array(bboxes)
             labels = np.array(labels)
         if not bboxes_ignore:
             bboxes_ignore = np.zeros((0, 4))
-            labels_ignore = np.zeros((0, ))
+            labels_ignore = np.zeros((0,))
         else:
             bboxes_ignore = np.array(bboxes_ignore)
             labels_ignore = np.array(labels_ignore)
-
         assert len(is_group_ofs) == len(labels) == len(bboxes)
         gt_is_group_ofs = np.array(is_group_ofs, dtype=np.bool)
-
-        # These parameters is not used yet.
         is_occludeds = np.array(is_occludeds, dtype=np.bool)
         is_truncateds = np.array(is_truncateds, dtype=np.bool)
         is_depictions = np.array(is_depictions, dtype=np.bool)
         is_insides = np.array(is_insides, dtype=np.bool)
-
-        ann = dict(
-            bboxes=bboxes.astype(np.float32),
-            labels=labels.astype(np.int64),
-            bboxes_ignore=bboxes_ignore.astype(np.float32),
-            labels_ignore=labels_ignore.astype(np.int64),
-            gt_is_group_ofs=gt_is_group_ofs,
-            is_occludeds=is_occludeds,
-            is_truncateds=is_truncateds,
-            is_depictions=is_depictions,
-            is_insides=is_insides)
-
+        ann = dict(bboxes=bboxes.astype(np.float32), labels=labels.astype(
+            np.int64), bboxes_ignore=bboxes_ignore.astype(np.float32),
+            labels_ignore=labels_ignore.astype(np.int64), gt_is_group_ofs=
+            gt_is_group_ofs, is_occludeds=is_occludeds, is_truncateds=
+            is_truncateds, is_depictions=is_depictions, is_insides=is_insides)
         return ann
 
     def get_meta_from_file(self, meta_file=''):
+        print('Filip YuNet Minify: Function fidx=4 get_meta_from_file called in mmdet/datasets/openimages.py:L291 ')
         """Get image metas from pkl file."""
-        metas = mmcv.load(
-            meta_file,
-            file_format='pkl',
-            file_client_args=self.file_client_args)
+        metas = mmcv.load(meta_file, file_format='pkl', file_client_args=
+            self.file_client_args)
         assert len(metas) == len(self)
         for i in range(len(metas)):
             file_name = osp.split(metas[i]['filename'])[-1]
@@ -306,17 +265,18 @@ class OpenImagesDataset(CustomDataset):
             self.test_img_shapes.append(hw)
 
     def get_meta_from_pipeline(self, results):
+        print('Filip YuNet Minify: Function fidx=5 get_meta_from_pipeline called in mmdet/datasets/openimages.py:L308 ')
         """Get image metas from pipeline."""
         self.temp_img_metas.extend(results['img_metas'])
         if dist.is_available() and self.world_size > 1:
             from mmdet.apis.test import collect_results_cpu
-
             self.test_img_metas = collect_results_cpu(self.temp_img_metas,
-                                                      len(self))
+                len(self))
         else:
             self.test_img_metas = self.temp_img_metas
 
     def get_img_shape(self, metas):
+        print('Filip YuNet Minify: Function fidx=6 get_img_shape called in mmdet/datasets/openimages.py:L319 ')
         """Set images original shape into data_infos."""
         assert len(metas) == len(self)
         for i in range(len(metas)):
@@ -330,6 +290,7 @@ class OpenImagesDataset(CustomDataset):
             self.test_img_shapes.append(hw)
 
     def prepare_test_img(self, idx):
+        print('Filip YuNet Minify: Function fidx=7 prepare_test_img called in mmdet/datasets/openimages.py:L332 ')
         """Get testing data after pipeline."""
         img_info = self.data_infos[idx]
         results = dict(img_info=img_info)
@@ -342,19 +303,22 @@ class OpenImagesDataset(CustomDataset):
         return results
 
     def _filter_imgs(self, min_size=32):
+        print('Filip YuNet Minify: Function fidx=8 _filter_imgs called in mmdet/datasets/openimages.py:L344 ')
         """Filter images too small."""
         if self.filter_empty_gt:
-            warnings.warn('OpenImageDatasets does not support '
-                          'filtering empty gt images.')
+            warnings.warn(
+                'OpenImageDatasets does not support filtering empty gt images.'
+                )
         valid_inds = [i for i in range(len(self))]
         return valid_inds
 
     def _set_group_flag(self):
+        print('Filip YuNet Minify: Function fidx=9 _set_group_flag called in mmdet/datasets/openimages.py:L352 ')
         """Set flag according to image aspect ratio."""
         self.flag = np.zeros(len(self), dtype=np.uint8)
-        # TODO: set flag without width and height
 
     def get_relation_matrix(self, hierarchy_file):
+        print('Filip YuNet Minify: Function fidx=10 get_relation_matrix called in mmdet/datasets/openimages.py:L357 ')
         """Get hierarchy for classes.
 
         Args:
@@ -365,7 +329,6 @@ class OpenImagesDataset(CustomDataset):
             the parent class and the child class, of shape
             (class_num, class_num).
         """
-
         if self.data_root is not None:
             if not osp.isabs(hierarchy_file):
                 hierarchy_file = osp.join(self.data_root, hierarchy_file)
@@ -373,15 +336,13 @@ class OpenImagesDataset(CustomDataset):
             hierarchy = json.load(f)
         class_num = len(self.CLASSES)
         class_label_tree = np.eye(class_num, class_num)
-        class_label_tree = self._convert_hierarchy_tree(
-            hierarchy, class_label_tree)
+        class_label_tree = self._convert_hierarchy_tree(hierarchy,
+            class_label_tree)
         return class_label_tree
 
-    def _convert_hierarchy_tree(self,
-                                hierarchy_map,
-                                class_label_tree,
-                                parents=[],
-                                get_all_parents=True):
+    def _convert_hierarchy_tree(self, hierarchy_map, class_label_tree,
+        parents=[], get_all_parents=True):
+        print('Filip YuNet Minify: Function fidx=11 _convert_hierarchy_tree called in mmdet/datasets/openimages.py:L380 ')
         """Get matrix of the corresponding relationship between the parent
         class and the child class.
 
@@ -403,7 +364,6 @@ class OpenImagesDataset(CustomDataset):
             the parent class and the child class, of shape
             (class_num, class_num).
         """
-
         if 'Subcategory' in hierarchy_map:
             for node in hierarchy_map['Subcategory']:
                 if 'LabelName' in node:
@@ -417,18 +377,17 @@ class OpenImagesDataset(CustomDataset):
                         if get_all_parents:
                             children.append(parent_index)
                         class_label_tree[children_index, parent_index] = 1
-
-                class_label_tree = self._convert_hierarchy_tree(
-                    node, class_label_tree, parents=children)
-
+                class_label_tree = self._convert_hierarchy_tree(node,
+                    class_label_tree, parents=children)
         return class_label_tree
 
     def add_supercategory_ann(self, annotations):
+        print('Filip YuNet Minify: Function fidx=12 add_supercategory_ann called in mmdet/datasets/openimages.py:L426 ')
         """Add parent classes of the corresponding class of the ground truth
         bboxes."""
         for i, ann in enumerate(annotations):
-            assert len(ann['labels']) == len(ann['bboxes']) == \
-                   len(ann['gt_is_group_ofs'])
+            assert len(ann['labels']) == len(ann['bboxes']) == len(ann[
+                'gt_is_group_ofs'])
             gt_bboxes = []
             gt_is_group_ofs = []
             gt_labels = []
@@ -446,16 +405,15 @@ class OpenImagesDataset(CustomDataset):
                     gt_bboxes.append(bbox)
                     gt_is_group_ofs.append(is_group)
                     gt_labels.append(label[0])
-            annotations[i] = dict(
-                bboxes=np.array(gt_bboxes).astype(np.float32),
-                labels=np.array(gt_labels).astype(np.int64),
-                bboxes_ignore=ann['bboxes_ignore'],
-                gt_is_group_ofs=np.array(gt_is_group_ofs).astype(np.bool))
-
+            annotations[i] = dict(bboxes=np.array(gt_bboxes).astype(np.
+                float32), labels=np.array(gt_labels).astype(np.int64),
+                bboxes_ignore=ann['bboxes_ignore'], gt_is_group_ofs=np.
+                array(gt_is_group_ofs).astype(np.bool))
         return annotations
 
-    def process_results(self, det_results, annotations,
-                        image_level_annotations):
+    def process_results(self, det_results, annotations, image_level_annotations
+        ):
+        print('Filip YuNet Minify: Function fidx=13 process_results called in mmdet/datasets/openimages.py:L457 ')
         """Process results of the corresponding class of the detection bboxes.
 
         Note: It will choose to do the following two processing according to
@@ -467,40 +425,36 @@ class OpenImagesDataset(CustomDataset):
         2. Whether to ignore the classes that unannotated on that image.
         """
         if image_level_annotations is not None:
-            assert len(annotations) == \
-                   len(image_level_annotations) == \
-                   len(det_results)
+            assert len(annotations) == len(image_level_annotations) == len(
+                det_results)
         else:
             assert len(annotations) == len(det_results)
         for i in range(len(det_results)):
             results = copy.deepcopy(det_results[i])
-            valid_classes = np.where(
-                np.array([[bbox.shape[0]] for bbox in det_results[i]]) != 0)[0]
+            valid_classes = np.where(np.array([[bbox.shape[0]] for bbox in
+                det_results[i]]) != 0)[0]
             if image_level_annotations is not None:
                 labels = annotations[i]['labels']
-                image_level_labels = \
-                    image_level_annotations[i]['image_level_labels']
-                allowed_labeles = np.unique(
-                    np.append(labels, image_level_labels))
+                image_level_labels = image_level_annotations[i][
+                    'image_level_labels']
+                allowed_labeles = np.unique(np.append(labels,
+                    image_level_labels))
             else:
                 allowed_labeles = np.unique(annotations[i]['labels'])
-
             for valid_class in valid_classes:
                 det_cls = np.where(self.class_label_tree[valid_class])[0]
                 for index in det_cls:
-                    if index in allowed_labeles and \
-                            index != valid_class and \
-                            self.get_supercategory:
-                        det_results[i][index] = \
-                            np.concatenate((det_results[i][index],
-                                            results[valid_class]))
+                    if (index in allowed_labeles and index != valid_class and
+                        self.get_supercategory):
+                        det_results[i][index] = np.concatenate((det_results
+                            [i][index], results[valid_class]))
                     elif index not in allowed_labeles and self.filter_labels:
-                        # Remove useless parts
-                        det_results[i][index] = np.empty(
-                            (0, 5)).astype(np.float32)
+                        det_results[i][index] = np.empty((0, 5)).astype(np.
+                            float32)
         return det_results
 
     def load_image_label_from_csv(self, image_level_ann_file):
+        print('Filip YuNet Minify: Function fidx=14 load_image_label_from_csv called in mmdet/datasets/openimages.py:L503 ')
         """Load image level annotations from csv style ann_file.
 
         Args:
@@ -521,7 +475,6 @@ class OpenImagesDataset(CustomDataset):
                   The higher the confidence, the smaller the chance for
                   the label to be a false positive.
         """
-
         item_lists = defaultdict(list)
         with open(image_level_ann_file, 'r') as f:
             reader = csv.reader(f)
@@ -529,13 +482,12 @@ class OpenImagesDataset(CustomDataset):
                 if i == 0:
                     continue
                 img_id = line[0]
-                item_lists[img_id].append(
-                    dict(
-                        image_level_label=int(self.index_dict[line[2]]),
-                        confidence=float(line[3])))
+                item_lists[img_id].append(dict(image_level_label=int(self.
+                    index_dict[line[2]]), confidence=float(line[3])))
         return item_lists
 
     def get_image_level_ann(self, image_level_ann_file):
+        print('Filip YuNet Minify: Function fidx=15 get_image_level_ann called in mmdet/datasets/openimages.py:L538 ')
         """Get OpenImages annotation by index.
 
         Args:
@@ -545,10 +497,9 @@ class OpenImagesDataset(CustomDataset):
         Returns:
             dict: Annotation info of specified index.
         """
-
         if hasattr(self.file_client, 'get_local_path'):
-            with self.file_client.get_local_path(image_level_ann_file) \
-                    as local_path:
+            with self.file_client.get_local_path(image_level_ann_file
+                ) as local_path:
                 item_lists = self.load_image_label_from_csv(local_path)
         else:
             item_lists = self.load_image_label_from_csv(image_level_ann_file)
@@ -556,10 +507,8 @@ class OpenImagesDataset(CustomDataset):
         for i in range(len(self)):
             img_info = self.data_infos[i].get('img_info', None)
             if img_info is not None:
-                # for Open Images Challenges
                 img_id = osp.split(img_info['filename'])[-1][:-4]
             else:
-                # for Open Images v6
                 img_id = self.data_infos[i]['img_id']
             item_list = item_lists.get(img_id, None)
             if item_list is not None:
@@ -568,27 +517,24 @@ class OpenImagesDataset(CustomDataset):
                 for obj in item_list:
                     image_level_label = int(obj['image_level_label'])
                     confidence = float(obj['confidence'])
-
                     image_level_labels.append(image_level_label)
                     confidences.append(confidence)
-
                 if not image_level_labels:
-                    image_level_labels = np.zeros((0, ))
-                    confidences = np.zeros((0, ))
+                    image_level_labels = np.zeros((0,))
+                    confidences = np.zeros((0,))
                 else:
                     image_level_labels = np.array(image_level_labels)
                     confidences = np.array(confidences)
             else:
-                image_level_labels = np.zeros((0, ))
-                confidences = np.zeros((0, ))
-            ann = dict(
-                image_level_labels=image_level_labels.astype(np.int64),
-                confidences=confidences.astype(np.float32))
+                image_level_labels = np.zeros((0,))
+                confidences = np.zeros((0,))
+            ann = dict(image_level_labels=image_level_labels.astype(np.
+                int64), confidences=confidences.astype(np.float32))
             image_level_annotations.append(ann)
-
         return image_level_annotations
 
     def denormalize_gt_bboxes(self, annotations):
+        print('Filip YuNet Minify: Function fidx=16 denormalize_gt_bboxes called in mmdet/datasets/openimages.py:L591 ')
         """Convert ground truth bboxes from relative position to absolute
         position.
 
@@ -602,6 +548,7 @@ class OpenImagesDataset(CustomDataset):
         return annotations
 
     def get_cat_ids(self, idx):
+        print('Filip YuNet Minify: Function fidx=17 get_cat_ids called in mmdet/datasets/openimages.py:L604 ')
         """Get category ids by index.
 
         Args:
@@ -612,15 +559,10 @@ class OpenImagesDataset(CustomDataset):
         """
         return self.get_ann_info(idx)['labels'].astype(np.int).tolist()
 
-    def evaluate(self,
-                 results,
-                 metric='mAP',
-                 logger=None,
-                 iou_thr=0.5,
-                 ioa_thr=0.5,
-                 scale_ranges=None,
-                 denorm_gt_bbox=True,
-                 use_group_of=True):
+    def evaluate(self, results, metric='mAP', logger=None, iou_thr=0.5,
+        ioa_thr=0.5, scale_ranges=None, denorm_gt_bbox=True, use_group_of=True
+        ):
+        print('Filip YuNet Minify: Function fidx=18 evaluate called in mmdet/datasets/openimages.py:L615 ')
         """Evaluate in OpenImages.
 
         Args:
@@ -642,7 +584,6 @@ class OpenImagesDataset(CustomDataset):
         Returns:
             dict[str, float]: AP metrics.
         """
-
         if not isinstance(metric, str):
             assert len(metric) == 1
             metric = metric[0]
@@ -650,73 +591,54 @@ class OpenImagesDataset(CustomDataset):
         if metric not in allowed_metrics:
             raise KeyError(f'metric {metric} is not supported')
         annotations = [self.get_ann_info(i) for i in range(len(self))]
-
         if self.load_image_level_labels:
-            image_level_annotations = \
-                self.get_image_level_ann(self.image_level_ann_file)
+            image_level_annotations = self.get_image_level_ann(self.
+                image_level_ann_file)
         else:
             image_level_annotations = None
-
-        # load metas from file
         if self.get_metas and self.load_from_file:
-            assert self.meta_file.endswith(
-                'pkl'), 'File name must be pkl suffix'
+            assert self.meta_file.endswith('pkl'
+                ), 'File name must be pkl suffix'
             self.get_meta_from_file(self.meta_file)
-        # load metas from pipeline
         else:
             self.get_img_shape(self.test_img_metas)
-
         if len(self.test_img_shapes) > len(self):
             self.test_img_shapes = self.test_img_shapes[:len(self)]
-
         if denorm_gt_bbox:
             annotations = self.denormalize_gt_bboxes(annotations)
-
-        # Reset test_image_metas, temp_image_metas and test_img_shapes
-        # to avoid potential error
         self.temp_img_metas = []
         self.test_img_shapes = []
         self.test_img_metas = []
         if self.get_supercategory:
             annotations = self.add_supercategory_ann(annotations)
-
         results = self.process_results(results, annotations,
-                                       image_level_annotations)
+            image_level_annotations)
         if use_group_of:
-            assert ioa_thr is not None, \
-                'ioa_thr must have value when using group_of in evaluation.'
-
+            assert ioa_thr is not None, 'ioa_thr must have value when using group_of in evaluation.'
         eval_results = OrderedDict()
         iou_thrs = [iou_thr] if isinstance(iou_thr, float) else iou_thr
-        ioa_thrs = [ioa_thr] if isinstance(ioa_thr, float) or ioa_thr is None \
-            else ioa_thr
-
-        # get dataset type
+        ioa_thrs = [ioa_thr] if isinstance(ioa_thr, float
+            ) or ioa_thr is None else ioa_thr
         if len(self.CLASSES) == 500:
             ds_name = 'oid_challenge'
         elif len(self.CLASSES) == 601:
             ds_name = 'oid_v6'
         else:
             ds_name = self.CLASSES
-            warnings.warn('Cannot infer dataset type from the length of the '
-                          'classes. Set `oid_v6` as dataset type.')
-
+            warnings.warn(
+                'Cannot infer dataset type from the length of the classes. Set `oid_v6` as dataset type.'
+                )
         if metric == 'mAP':
             assert isinstance(iou_thrs, list) and isinstance(ioa_thrs, list)
             assert len(ioa_thrs) == len(iou_thrs)
             mean_aps = []
             for iou_thr, ioa_thr in zip(iou_thrs, ioa_thrs):
-                print_log(f'\n{"-" * 15}iou_thr, ioa_thr: {iou_thr}, {ioa_thr}'
-                          f'{"-" * 15}')
-                mean_ap, _ = eval_map(
-                    results,
-                    annotations,
-                    scale_ranges=scale_ranges,
-                    iou_thr=iou_thr,
-                    ioa_thr=ioa_thr,
-                    dataset=ds_name,
-                    logger=logger,
-                    use_group_of=use_group_of)
+                print_log(
+                    f"\n{'-' * 15}iou_thr, ioa_thr: {iou_thr}, {ioa_thr}{'-' * 15}"
+                    )
+                mean_ap, _ = eval_map(results, annotations, scale_ranges=
+                    scale_ranges, iou_thr=iou_thr, ioa_thr=ioa_thr, dataset
+                    =ds_name, logger=logger, use_group_of=use_group_of)
                 mean_aps.append(mean_ap)
                 eval_results[f'AP{int(iou_thr * 100):02d}'] = round(mean_ap, 3)
             eval_results['mAP'] = sum(mean_aps) / len(mean_aps)
@@ -728,11 +650,13 @@ class OpenImagesChallengeDataset(OpenImagesDataset):
     """Open Images Challenge dataset for detection."""
 
     def __init__(self, ann_file, **kwargs):
+        print('Filip YuNet Minify: Function fidx=19 __init__ called in mmdet/datasets/openimages.py:L730 ')
         assert ann_file.endswith('txt')
-        super(OpenImagesChallengeDataset, self).__init__(
-            ann_file=ann_file, **kwargs)
+        super(OpenImagesChallengeDataset, self).__init__(ann_file=ann_file,
+            **kwargs)
 
     def get_classes_from_csv(self, label_file):
+        print('Filip YuNet Minify: Function fidx=20 get_classes_from_csv called in mmdet/datasets/openimages.py:L735 ')
         """Get classes name from file.
 
         Args:
@@ -743,7 +667,6 @@ class OpenImagesChallengeDataset(OpenImagesDataset):
         Returns:
             list: Class name of OpenImages.
         """
-
         label_list = []
         id_list = []
         with open(label_file, 'r') as f:
@@ -751,11 +674,9 @@ class OpenImagesChallengeDataset(OpenImagesDataset):
             for line in reader:
                 label_name = line[0]
                 label_id = int(line[2])
-
                 label_list.append(line[1])
                 id_list.append(label_id)
                 self.index_dict[label_name] = label_id - 1
-
         indexes = np.argsort(id_list)
         classes_names = []
         for index in indexes:
@@ -763,6 +684,7 @@ class OpenImagesChallengeDataset(OpenImagesDataset):
         return classes_names
 
     def load_annotations(self, ann_file):
+        print('Filip YuNet Minify: Function fidx=21 load_annotations called in mmdet/datasets/openimages.py:L765 ')
         """Load annotation from annotation file."""
         with open(ann_file) as f:
             lines = f.readlines()
@@ -778,56 +700,48 @@ class OpenImagesChallengeDataset(OpenImagesDataset):
             i += 1
             for j in range(img_gt_size):
                 sp = lines[i + j].split()
-                bboxes.append(
-                    [float(sp[1]),
-                     float(sp[2]),
-                     float(sp[3]),
-                     float(sp[4])])
-                labels.append(int(sp[0]) - 1)  # labels begin from 1
+                bboxes.append([float(sp[1]), float(sp[2]), float(sp[3]),
+                    float(sp[4])])
+                labels.append(int(sp[0]) - 1)
                 is_group_ofs.append(True if int(sp[5]) == 1 else False)
             i += img_gt_size
-
             gt_bboxes = np.array(bboxes, dtype=np.float32)
             gt_labels = np.array(labels, dtype=np.int64)
             gt_bboxes_ignore = np.zeros((0, 4), dtype=np.float32)
             gt_is_group_ofs = np.array(is_group_ofs, dtype=np.bool)
-
             img_info = dict(filename=filename)
-            ann_info = dict(
-                bboxes=gt_bboxes,
-                labels=gt_labels,
-                bboxes_ignore=gt_bboxes_ignore,
-                gt_is_group_ofs=gt_is_group_ofs)
+            ann_info = dict(bboxes=gt_bboxes, labels=gt_labels,
+                bboxes_ignore=gt_bboxes_ignore, gt_is_group_ofs=gt_is_group_ofs
+                )
             ann_infos.append(dict(img_info=img_info, ann_info=ann_info))
-
         return ann_infos
 
     def prepare_train_img(self, idx):
+        print('Filip YuNet Minify: Function fidx=22 prepare_train_img called in mmdet/datasets/openimages.py:L805 ')
         """Get training data and annotations after pipeline."""
         ann_info = self.data_infos[idx]
-        results = dict(
-            img_info=ann_info['img_info'],
-            ann_info=ann_info['ann_info'],
-        )
+        results = dict(img_info=ann_info['img_info'], ann_info=ann_info[
+            'ann_info'])
         if self.proposals is not None:
             results['proposals'] = self.proposals[idx]
         self.pre_pipeline(results)
         return self.pipeline(results)
 
     def prepare_test_img(self, idx):
+        print('Filip YuNet Minify: Function fidx=23 prepare_test_img called in mmdet/datasets/openimages.py:L817 ')
         """Get testing data after pipeline."""
         ann_info = self.data_infos[idx]
         results = dict(img_info=ann_info['img_info'])
         if self.proposals is not None:
             results['proposals'] = self.proposals[idx]
         self.pre_pipeline(results)
-
         results = self.pipeline(results)
         if self.get_metas and self.load_from_pipeline:
             self.get_meta_from_pipeline(results)
         return results
 
     def get_relation_matrix(self, hierarchy_file):
+        print('Filip YuNet Minify: Function fidx=24 get_relation_matrix called in mmdet/datasets/openimages.py:L830 ')
         """Get hierarchy for classes.
 
         Args:
@@ -842,6 +756,7 @@ class OpenImagesChallengeDataset(OpenImagesDataset):
         return class_label_tree[1:, 1:]
 
     def get_ann_info(self, idx):
+        print('Filip YuNet Minify: Function fidx=25 get_ann_info called in mmdet/datasets/openimages.py:L844 ')
         """Get OpenImages annotation by index.
 
         Args:
@@ -850,11 +765,11 @@ class OpenImagesChallengeDataset(OpenImagesDataset):
         Returns:
             dict: Annotation info of specified index.
         """
-        # avoid some potential error
         data_infos = copy.deepcopy(self.data_infos[idx]['ann_info'])
         return data_infos
 
     def load_image_label_from_csv(self, image_level_ann_file):
+        print('Filip YuNet Minify: Function fidx=26 load_image_label_from_csv called in mmdet/datasets/openimages.py:L857 ')
         """Load image level annotations from csv style ann_file.
 
         Args:
@@ -869,7 +784,6 @@ class OpenImagesChallengeDataset(OpenImagesDataset):
                 - `image_level_label` (int): of shape 1.
                 - `confidence` (float): of shape 1.
         """
-
         item_lists = defaultdict(list)
         with open(image_level_ann_file, 'r') as f:
             reader = csv.reader(f)
@@ -884,8 +798,6 @@ class OpenImagesChallengeDataset(OpenImagesDataset):
                     assert label_id in self.index_dict
                     image_level_label = int(self.index_dict[label_id])
                     confidence = float(line[2])
-                    item_lists[img_id].append(
-                        dict(
-                            image_level_label=image_level_label,
-                            confidence=confidence))
+                    item_lists[img_id].append(dict(image_level_label=
+                        image_level_label, confidence=confidence))
         return item_lists

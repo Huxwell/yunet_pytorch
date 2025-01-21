@@ -1,21 +1,19 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import warnings
 from pathlib import Path
-
 import mmcv
 import numpy as np
 import torch
 from mmcv.ops import RoIPool
 from mmcv.parallel import collate, scatter
 from mmcv.runner import load_checkpoint
-
-from mmdet.core import get_classes
+from mmdet.core.evaluation.class_names import get_classes
 from mmdet.datasets import replace_ImageToTensor
 from mmdet.datasets.pipelines import Compose
 from mmdet.models import build_detector
 
 
 def init_detector(config, checkpoint=None, device='cuda:0', cfg_options=None):
+    print('Filip YuNet Minify: Function fidx=0 init_detector called in mmdet/apis/inference.py:L18 ')
     """Initialize a detector from config file.
 
     Args:
@@ -32,8 +30,9 @@ def init_detector(config, checkpoint=None, device='cuda:0', cfg_options=None):
     if isinstance(config, (str, Path)):
         config = mmcv.Config.fromfile(config)
     elif not isinstance(config, mmcv.Config):
-        raise TypeError('config must be a filename or Config object, '
-                        f'but got {type(config)}')
+        raise TypeError(
+            f'config must be a filename or Config object, but got {type(config)}'
+            )
     if cfg_options is not None:
         config.merge_from_dict(cfg_options)
     if 'pretrained' in config.model:
@@ -48,10 +47,11 @@ def init_detector(config, checkpoint=None, device='cuda:0', cfg_options=None):
             model.CLASSES = checkpoint['meta']['CLASSES']
         else:
             warnings.simplefilter('once')
-            warnings.warn('Class names are not saved in the checkpoint\'s '
-                          'meta data, use COCO classes by default.')
+            warnings.warn(
+                "Class names are not saved in the checkpoint's meta data, use COCO classes by default."
+                )
             model.CLASSES = get_classes('coco')
-    model.cfg = config  # save the config in the model for convenience
+    model.cfg = config
     model.to(device)
     model.eval()
     return model
@@ -64,6 +64,7 @@ class LoadImage:
     """
 
     def __call__(self, results):
+        print('Filip YuNet Minify: Function fidx=1 __call__ called in mmdet/apis/inference.py:L66 ')
         """Call function to load images into results.
 
         Args:
@@ -73,9 +74,9 @@ class LoadImage:
             dict: ``results`` will be returned containing loaded image.
         """
         warnings.simplefilter('once')
-        warnings.warn('`LoadImage` is deprecated and will be removed in '
-                      'future releases. You may use `LoadImageFromWebcam` '
-                      'from `mmdet.datasets.pipelines.` instead.')
+        warnings.warn(
+            '`LoadImage` is deprecated and will be removed in future releases. You may use `LoadImageFromWebcam` from `mmdet.datasets.pipelines.` instead.'
+            )
         if isinstance(results['img'], str):
             results['filename'] = results['img']
             results['ori_filename'] = results['img']
@@ -91,6 +92,7 @@ class LoadImage:
 
 
 def inference_detector(model, imgs):
+    print('Filip YuNet Minify: Function fidx=2 inference_detector called in mmdet/apis/inference.py:L93 ')
     """Inference image(s) with the detector.
 
     Args:
@@ -102,54 +104,37 @@ def inference_detector(model, imgs):
         If imgs is a list or tuple, the same length list type results
         will be returned, otherwise return the detection results directly.
     """
-
     if isinstance(imgs, (list, tuple)):
         is_batch = True
     else:
         imgs = [imgs]
         is_batch = False
-
     cfg = model.cfg
-    device = next(model.parameters()).device  # model device
-
+    device = next(model.parameters()).device
     if isinstance(imgs[0], np.ndarray):
         cfg = cfg.copy()
-        # set loading pipeline type
         cfg.data.test.pipeline[0].type = 'LoadImageFromWebcam'
-
     cfg.data.test.pipeline = replace_ImageToTensor(cfg.data.test.pipeline)
     test_pipeline = Compose(cfg.data.test.pipeline)
-
     datas = []
     for img in imgs:
-        # prepare data
         if isinstance(img, np.ndarray):
-            # directly add img
             data = dict(img=img)
         else:
-            # add information into dict
             data = dict(img_info=dict(filename=img), img_prefix=None)
-        # build the data pipeline
         data = test_pipeline(data)
         datas.append(data)
-
     data = collate(datas, samples_per_gpu=len(imgs))
-    # just get the actual data from DataContainer
     data['img_metas'] = [img_metas.data[0] for img_metas in data['img_metas']]
     data['img'] = [img.data[0] for img in data['img']]
     if next(model.parameters()).is_cuda:
-        # scatter to specified GPU
         data = scatter(data, [device])[0]
     else:
         for m in model.modules():
-            assert not isinstance(
-                m, RoIPool
-            ), 'CPU inference with RoIPool is not supported currently.'
-
-    # forward the model
+            assert not isinstance(m, RoIPool
+                ), 'CPU inference with RoIPool is not supported currently.'
     with torch.no_grad():
         results = model(return_loss=False, rescale=True, **data)
-
     if not is_batch:
         return results[0]
     else:
@@ -168,59 +153,38 @@ async def async_inference_detector(model, imgs):
     """
     if not isinstance(imgs, (list, tuple)):
         imgs = [imgs]
-
     cfg = model.cfg
-    device = next(model.parameters()).device  # model device
-
+    device = next(model.parameters()).device
     if isinstance(imgs[0], np.ndarray):
         cfg = cfg.copy()
-        # set loading pipeline type
         cfg.data.test.pipeline[0].type = 'LoadImageFromWebcam'
-
     cfg.data.test.pipeline = replace_ImageToTensor(cfg.data.test.pipeline)
     test_pipeline = Compose(cfg.data.test.pipeline)
-
     datas = []
     for img in imgs:
-        # prepare data
         if isinstance(img, np.ndarray):
-            # directly add img
             data = dict(img=img)
         else:
-            # add information into dict
             data = dict(img_info=dict(filename=img), img_prefix=None)
-        # build the data pipeline
         data = test_pipeline(data)
         datas.append(data)
-
     data = collate(datas, samples_per_gpu=len(imgs))
-    # just get the actual data from DataContainer
     data['img_metas'] = [img_metas.data[0] for img_metas in data['img_metas']]
     data['img'] = [img.data[0] for img in data['img']]
     if next(model.parameters()).is_cuda:
-        # scatter to specified GPU
         data = scatter(data, [device])[0]
     else:
         for m in model.modules():
-            assert not isinstance(
-                m, RoIPool
-            ), 'CPU inference with RoIPool is not supported currently.'
-
-    # We don't restore `torch.is_grad_enabled()` value during concurrent
-    # inference since execution can overlap
+            assert not isinstance(m, RoIPool
+                ), 'CPU inference with RoIPool is not supported currently.'
     torch.set_grad_enabled(False)
     results = await model.aforward_test(rescale=True, **data)
     return results
 
 
-def show_result_pyplot(model,
-                       img,
-                       result,
-                       score_thr=0.3,
-                       title='result',
-                       wait_time=0,
-                       palette=None,
-                       out_file=None):
+def show_result_pyplot(model, img, result, score_thr=0.3, title='result',
+    wait_time=0, palette=None, out_file=None):
+    print('Filip YuNet Minify: Function fidx=3 show_result_pyplot called in mmdet/apis/inference.py:L216 ')
     """Visualize the detection results on the image.
 
     Args:
@@ -238,14 +202,6 @@ def show_result_pyplot(model,
     """
     if hasattr(model, 'module'):
         model = model.module
-    model.show_result(
-        img,
-        result,
-        score_thr=score_thr,
-        show=True,
-        wait_time=wait_time,
-        win_name=title,
-        bbox_color=palette,
-        text_color=(200, 200, 200),
-        mask_color=palette,
-        out_file=out_file)
+    model.show_result(img, result, score_thr=score_thr, show=True,
+        wait_time=wait_time, win_name=title, bbox_color=palette, text_color
+        =(200, 200, 200), mask_color=palette, out_file=out_file)

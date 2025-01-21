@@ -1,6 +1,4 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import torch
-
 from ..builder import BBOX_ASSIGNERS
 from ..iou_calculators import build_iou_calculator
 from .max_iou_assigner import MaxIoUAssigner
@@ -37,16 +35,11 @@ class ApproxMaxIoUAssigner(MaxIoUAssigner):
             on CPU device. Negative values mean not assign on CPU.
     """
 
-    def __init__(self,
-                 pos_iou_thr,
-                 neg_iou_thr,
-                 min_pos_iou=.0,
-                 gt_max_assign_all=True,
-                 ignore_iof_thr=-1,
-                 ignore_wrt_candidates=True,
-                 match_low_quality=True,
-                 gpu_assign_thr=-1,
-                 iou_calculator=dict(type='BboxOverlaps2D')):
+    def __init__(self, pos_iou_thr, neg_iou_thr, min_pos_iou=0.0,
+        gt_max_assign_all=True, ignore_iof_thr=-1, ignore_wrt_candidates=
+        True, match_low_quality=True, gpu_assign_thr=-1, iou_calculator=
+        dict(type='BboxOverlaps2D')):
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/core/bbox/assigners/approx_max_iou_assigner.py:L40 ')
         self.pos_iou_thr = pos_iou_thr
         self.neg_iou_thr = neg_iou_thr
         self.min_pos_iou = min_pos_iou
@@ -57,13 +50,9 @@ class ApproxMaxIoUAssigner(MaxIoUAssigner):
         self.match_low_quality = match_low_quality
         self.iou_calculator = build_iou_calculator(iou_calculator)
 
-    def assign(self,
-               approxs,
-               squares,
-               approxs_per_octave,
-               gt_bboxes,
-               gt_bboxes_ignore=None,
-               gt_labels=None):
+    def assign(self, approxs, squares, approxs_per_octave, gt_bboxes,
+        gt_bboxes_ignore=None, gt_labels=None):
+        print('Filip YuNet Minify: Function fidx=1 assign called in mmdet/core/bbox/assigners/approx_max_iou_assigner.py:L60 ')
         """Assign gt to approxs.
 
         This method assign a gt bbox to each group of approxs (bboxes),
@@ -97,20 +86,14 @@ class ApproxMaxIoUAssigner(MaxIoUAssigner):
         """
         num_squares = squares.size(0)
         num_gts = gt_bboxes.size(0)
-
         if num_squares == 0 or num_gts == 0:
-            # No predictions and/or truth, return empty assignment
             overlaps = approxs.new(num_gts, num_squares)
             assign_result = self.assign_wrt_overlaps(overlaps, gt_labels)
             return assign_result
-
-        # re-organize anchors by approxs_per_octave x num_squares
-        approxs = torch.transpose(
-            approxs.view(num_squares, approxs_per_octave, 4), 0,
-            1).contiguous().view(-1, 4)
-        assign_on_cpu = True if (self.gpu_assign_thr > 0) and (
-            num_gts > self.gpu_assign_thr) else False
-        # compute overlap and assign gt on CPU when number of GT is large
+        approxs = torch.transpose(approxs.view(num_squares,
+            approxs_per_octave, 4), 0, 1).contiguous().view(-1, 4)
+        assign_on_cpu = (True if self.gpu_assign_thr > 0 and num_gts > self
+            .gpu_assign_thr else False)
         if assign_on_cpu:
             device = approxs.device
             approxs = approxs.cpu()
@@ -120,23 +103,20 @@ class ApproxMaxIoUAssigner(MaxIoUAssigner):
             if gt_labels is not None:
                 gt_labels = gt_labels.cpu()
         all_overlaps = self.iou_calculator(approxs, gt_bboxes)
-
         overlaps, _ = all_overlaps.view(approxs_per_octave, num_squares,
-                                        num_gts).max(dim=0)
+            num_gts).max(dim=0)
         overlaps = torch.transpose(overlaps, 0, 1)
-
-        if (self.ignore_iof_thr > 0 and gt_bboxes_ignore is not None
-                and gt_bboxes_ignore.numel() > 0 and squares.numel() > 0):
+        if (self.ignore_iof_thr > 0 and gt_bboxes_ignore is not None and 
+            gt_bboxes_ignore.numel() > 0 and squares.numel() > 0):
             if self.ignore_wrt_candidates:
-                ignore_overlaps = self.iou_calculator(
-                    squares, gt_bboxes_ignore, mode='iof')
+                ignore_overlaps = self.iou_calculator(squares,
+                    gt_bboxes_ignore, mode='iof')
                 ignore_max_overlaps, _ = ignore_overlaps.max(dim=1)
             else:
-                ignore_overlaps = self.iou_calculator(
-                    gt_bboxes_ignore, squares, mode='iof')
+                ignore_overlaps = self.iou_calculator(gt_bboxes_ignore,
+                    squares, mode='iof')
                 ignore_max_overlaps, _ = ignore_overlaps.max(dim=0)
-            overlaps[:, ignore_max_overlaps > self.ignore_iof_thr] = -1
-
+            overlaps[:, (ignore_max_overlaps > self.ignore_iof_thr)] = -1
         assign_result = self.assign_wrt_overlaps(overlaps, gt_labels)
         if assign_on_cpu:
             assign_result.gt_inds = assign_result.gt_inds.to(device)

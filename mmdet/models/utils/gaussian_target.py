@@ -1,11 +1,10 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 from math import sqrt
-
 import torch
 import torch.nn.functional as F
 
 
 def gaussian2D(radius, sigma=1, dtype=torch.float32, device='cpu'):
+    print('Filip YuNet Minify: Function fidx=0 gaussian2D called in mmdet/models/utils/gaussian_target.py:L8 ')
     """Generate 2D gaussian kernel.
 
     Args:
@@ -18,18 +17,17 @@ def gaussian2D(radius, sigma=1, dtype=torch.float32, device='cpu'):
         h (Tensor): Gaussian kernel with a
             ``(2 * radius + 1) * (2 * radius + 1)`` shape.
     """
-    x = torch.arange(
-        -radius, radius + 1, dtype=dtype, device=device).view(1, -1)
-    y = torch.arange(
-        -radius, radius + 1, dtype=dtype, device=device).view(-1, 1)
-
+    x = torch.arange(-radius, radius + 1, dtype=dtype, device=device).view(
+        1, -1)
+    y = torch.arange(-radius, radius + 1, dtype=dtype, device=device).view(
+        -1, 1)
     h = (-(x * x + y * y) / (2 * sigma * sigma)).exp()
-
     h[h < torch.finfo(h.dtype).eps * h.max()] = 0
     return h
 
 
 def gen_gaussian_target(heatmap, center, radius, k=1):
+    print('Filip YuNet Minify: Function fidx=1 gen_gaussian_target called in mmdet/models/utils/gaussian_target.py:L32 ')
     """Generate 2D gaussian heatmap.
 
     Args:
@@ -43,30 +41,24 @@ def gen_gaussian_target(heatmap, center, radius, k=1):
         out_heatmap (Tensor): Updated heatmap covered by gaussian kernel.
     """
     diameter = 2 * radius + 1
-    gaussian_kernel = gaussian2D(
-        radius, sigma=diameter / 6, dtype=heatmap.dtype, device=heatmap.device)
-
+    gaussian_kernel = gaussian2D(radius, sigma=diameter / 6, dtype=heatmap.
+        dtype, device=heatmap.device)
     x, y = center
-
     height, width = heatmap.shape[:2]
-
     left, right = min(x, radius), min(width - x, radius + 1)
     top, bottom = min(y, radius), min(height - y, radius + 1)
-
     masked_heatmap = heatmap[y - top:y + bottom, x - left:x + right]
-    masked_gaussian = gaussian_kernel[radius - top:radius + bottom,
-                                      radius - left:radius + right]
+    masked_gaussian = gaussian_kernel[radius - top:radius + bottom, radius -
+        left:radius + right]
     out_heatmap = heatmap
-    torch.max(
-        masked_heatmap,
-        masked_gaussian * k,
-        out=out_heatmap[y - top:y + bottom, x - left:x + right])
-
+    torch.max(masked_heatmap, masked_gaussian * k, out=out_heatmap[y - top:
+        y + bottom, x - left:x + right])
     return out_heatmap
 
 
 def gaussian_radius(det_size, min_overlap):
-    r"""Generate 2D gaussian radius.
+    print('Filip YuNet Minify: Function fidx=2 gaussian_radius called in mmdet/models/utils/gaussian_target.py:L68 ')
+    """Generate 2D gaussian radius.
 
     This function is modified from the `official github repo
     <https://github.com/princeton-vl/CornerNet-Lite/blob/master/core/sample/
@@ -102,10 +94,10 @@ def gaussian_radius(det_size, min_overlap):
     To ensure IoU of generated box and gt box is larger than ``min_overlap``:
 
     .. math::
-        \cfrac{(w-r)*(h-r)}{w*h+(w+h)r-r^2} \ge {iou} \quad\Rightarrow\quad
-        {r^2-(w+h)r+\cfrac{1-iou}{1+iou}*w*h} \ge 0 \\
-        {a} = 1,\quad{b} = {-(w+h)},\quad{c} = {\cfrac{1-iou}{1+iou}*w*h}
-        {r} \le \cfrac{-b-\sqrt{b^2-4*a*c}}{2*a}
+        \\cfrac{(w-r)*(h-r)}{w*h+(w+h)r-r^2} \\ge {iou} \\quad\\Rightarrow\\quad
+        {r^2-(w+h)r+\\cfrac{1-iou}{1+iou}*w*h} \\ge 0 \\\\
+        {a} = 1,\\quad{b} = {-(w+h)},\\quad{c} = {\\cfrac{1-iou}{1+iou}*w*h}
+        {r} \\le \\cfrac{-b-\\sqrt{b^2-4*a*c}}{2*a}
 
     - Case2: both two corners are inside the gt box.
 
@@ -126,10 +118,10 @@ def gaussian_radius(det_size, min_overlap):
     To ensure IoU of generated box and gt box is larger than ``min_overlap``:
 
     .. math::
-        \cfrac{(w-2*r)*(h-2*r)}{w*h} \ge {iou} \quad\Rightarrow\quad
-        {4r^2-2(w+h)r+(1-iou)*w*h} \ge 0 \\
-        {a} = 4,\quad {b} = {-2(w+h)},\quad {c} = {(1-iou)*w*h}
-        {r} \le \cfrac{-b-\sqrt{b^2-4*a*c}}{2*a}
+        \\cfrac{(w-2*r)*(h-2*r)}{w*h} \\ge {iou} \\quad\\Rightarrow\\quad
+        {4r^2-2(w+h)r+(1-iou)*w*h} \\ge 0 \\\\
+        {a} = 4,\\quad {b} = {-2(w+h)},\\quad {c} = {(1-iou)*w*h}
+        {r} \\le \\cfrac{-b-\\sqrt{b^2-4*a*c}}{2*a}
 
     - Case3: both two corners are outside the gt box.
 
@@ -152,10 +144,10 @@ def gaussian_radius(det_size, min_overlap):
     To ensure IoU of generated box and gt box is larger than ``min_overlap``:
 
     .. math::
-        \cfrac{w*h}{(w+2*r)*(h+2*r)} \ge {iou} \quad\Rightarrow\quad
-        {4*iou*r^2+2*iou*(w+h)r+(iou-1)*w*h} \le 0 \\
-        {a} = {4*iou},\quad {b} = {2*iou*(w+h)},\quad {c} = {(iou-1)*w*h} \\
-        {r} \le \cfrac{-b+\sqrt{b^2-4*a*c}}{2*a}
+        \\cfrac{w*h}{(w+2*r)*(h+2*r)} \\ge {iou} \\quad\\Rightarrow\\quad
+        {4*iou*r^2+2*iou*(w+h)r+(iou-1)*w*h} \\le 0 \\\\
+        {a} = {4*iou},\\quad {b} = {2*iou*(w+h)},\\quad {c} = {(iou-1)*w*h} \\\\
+        {r} \\le \\cfrac{-b+\\sqrt{b^2-4*a*c}}{2*a}
 
     Args:
         det_size (list[int]): Shape of object.
@@ -166,28 +158,26 @@ def gaussian_radius(det_size, min_overlap):
         radius (int): Radius of gaussian kernel.
     """
     height, width = det_size
-
     a1 = 1
-    b1 = (height + width)
+    b1 = height + width
     c1 = width * height * (1 - min_overlap) / (1 + min_overlap)
-    sq1 = sqrt(b1**2 - 4 * a1 * c1)
+    sq1 = sqrt(b1 ** 2 - 4 * a1 * c1)
     r1 = (b1 - sq1) / (2 * a1)
-
     a2 = 4
     b2 = 2 * (height + width)
     c2 = (1 - min_overlap) * width * height
-    sq2 = sqrt(b2**2 - 4 * a2 * c2)
+    sq2 = sqrt(b2 ** 2 - 4 * a2 * c2)
     r2 = (b2 - sq2) / (2 * a2)
-
     a3 = 4 * min_overlap
     b3 = -2 * min_overlap * (height + width)
     c3 = (min_overlap - 1) * width * height
-    sq3 = sqrt(b3**2 - 4 * a3 * c3)
+    sq3 = sqrt(b3 ** 2 - 4 * a3 * c3)
     r3 = (b3 + sq3) / (2 * a3)
     return min(r1, r2, r3)
 
 
 def get_local_maximum(heat, kernel=3):
+    print('Filip YuNet Minify: Function fidx=3 get_local_maximum called in mmdet/models/utils/gaussian_target.py:L190 ')
     """Extract local maximum pixel with given kernel.
 
     Args:
@@ -205,6 +195,7 @@ def get_local_maximum(heat, kernel=3):
 
 
 def get_topk_from_heatmap(scores, k=20):
+    print('Filip YuNet Minify: Function fidx=4 get_topk_from_heatmap called in mmdet/models/utils/gaussian_target.py:L207 ')
     """Get top k positions from heatmap.
 
     Args:
@@ -232,6 +223,7 @@ def get_topk_from_heatmap(scores, k=20):
 
 
 def gather_feat(feat, ind, mask=None):
+    print('Filip YuNet Minify: Function fidx=5 gather_feat called in mmdet/models/utils/gaussian_target.py:L234 ')
     """Gather feature according to index.
 
     Args:
@@ -253,6 +245,7 @@ def gather_feat(feat, ind, mask=None):
 
 
 def transpose_and_gather_feat(feat, ind):
+    print('Filip YuNet Minify: Function fidx=6 transpose_and_gather_feat called in mmdet/models/utils/gaussian_target.py:L255 ')
     """Transpose and gather feature according to index.
 
     Args:

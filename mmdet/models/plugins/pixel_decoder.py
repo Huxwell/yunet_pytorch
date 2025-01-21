@@ -1,10 +1,8 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import PLUGIN_LAYERS, Conv2d, ConvModule, caffe2_xavier_init
-from mmcv.cnn.bricks.transformer import (build_positional_encoding,
-                                         build_transformer_layer_sequence)
+from mmcv.cnn.bricks.transformer import build_positional_encoding, build_transformer_layer_sequence
 from mmcv.runner import BaseModule, ModuleList
 
 
@@ -31,13 +29,10 @@ class PixelDecoder(BaseModule):
             Default: None
     """
 
-    def __init__(self,
-                 in_channels,
-                 feat_channels,
-                 out_channels,
-                 norm_cfg=dict(type='GN', num_groups=32),
-                 act_cfg=dict(type='ReLU'),
-                 init_cfg=None):
+    def __init__(self, in_channels, feat_channels, out_channels, norm_cfg=
+        dict(type='GN', num_groups=32), act_cfg=dict(type='ReLU'), init_cfg
+        =None):
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/models/plugins/pixel_decoder.py:L34 ')
         super().__init__(init_cfg=init_cfg)
         self.in_channels = in_channels
         self.num_inputs = len(in_channels)
@@ -45,47 +40,31 @@ class PixelDecoder(BaseModule):
         self.output_convs = ModuleList()
         self.use_bias = norm_cfg is None
         for i in range(0, self.num_inputs - 1):
-            lateral_conv = ConvModule(
-                in_channels[i],
-                feat_channels,
-                kernel_size=1,
-                bias=self.use_bias,
-                norm_cfg=norm_cfg,
+            lateral_conv = ConvModule(in_channels[i], feat_channels,
+                kernel_size=1, bias=self.use_bias, norm_cfg=norm_cfg,
                 act_cfg=None)
-            output_conv = ConvModule(
-                feat_channels,
-                feat_channels,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-                bias=self.use_bias,
-                norm_cfg=norm_cfg,
-                act_cfg=act_cfg)
+            output_conv = ConvModule(feat_channels, feat_channels,
+                kernel_size=3, stride=1, padding=1, bias=self.use_bias,
+                norm_cfg=norm_cfg, act_cfg=act_cfg)
             self.lateral_convs.append(lateral_conv)
             self.output_convs.append(output_conv)
-
-        self.last_feat_conv = ConvModule(
-            in_channels[-1],
-            feat_channels,
-            kernel_size=3,
-            padding=1,
-            stride=1,
-            bias=self.use_bias,
-            norm_cfg=norm_cfg,
-            act_cfg=act_cfg)
-        self.mask_feature = Conv2d(
-            feat_channels, out_channels, kernel_size=3, stride=1, padding=1)
+        self.last_feat_conv = ConvModule(in_channels[-1], feat_channels,
+            kernel_size=3, padding=1, stride=1, bias=self.use_bias,
+            norm_cfg=norm_cfg, act_cfg=act_cfg)
+        self.mask_feature = Conv2d(feat_channels, out_channels, kernel_size
+            =3, stride=1, padding=1)
 
     def init_weights(self):
+        print('Filip YuNet Minify: Function fidx=1 init_weights called in mmdet/models/plugins/pixel_decoder.py:L79 ')
         """Initialize weights."""
         for i in range(0, self.num_inputs - 2):
             caffe2_xavier_init(self.lateral_convs[i].conv, bias=0)
             caffe2_xavier_init(self.output_convs[i].conv, bias=0)
-
         caffe2_xavier_init(self.mask_feature, bias=0)
         caffe2_xavier_init(self.last_feat_conv, bias=0)
 
     def forward(self, feats, img_metas):
+        print('Filip YuNet Minify: Function fidx=2 forward called in mmdet/models/plugins/pixel_decoder.py:L88 ')
         """
         Args:
             feats (list[Tensor]): Feature maps of each level. Each has
@@ -96,17 +75,15 @@ class PixelDecoder(BaseModule):
         Returns:
             tuple: a tuple containing the following:
                 - mask_feature (Tensor): Shape (batch_size, c, h, w).
-                - memory (Tensor): Output of last stage of backbone.\
-                        Shape (batch_size, c, h, w).
+                - memory (Tensor): Output of last stage of backbone.                        Shape (batch_size, c, h, w).
         """
         y = self.last_feat_conv(feats[-1])
         for i in range(self.num_inputs - 2, -1, -1):
             x = feats[i]
             cur_feat = self.lateral_convs[i](x)
-            y = cur_feat + \
-                F.interpolate(y, size=cur_feat.shape[-2:], mode='nearest')
+            y = cur_feat + F.interpolate(y, size=cur_feat.shape[-2:], mode=
+                'nearest')
             y = self.output_convs[i](y)
-
         mask_feature = self.mask_feature(y)
         memory = feats[-1]
         return mask_feature, memory
@@ -135,61 +112,41 @@ class TransformerEncoderPixelDecoder(PixelDecoder):
             Default: None
     """
 
-    def __init__(self,
-                 in_channels,
-                 feat_channels,
-                 out_channels,
-                 norm_cfg=dict(type='GN', num_groups=32),
-                 act_cfg=dict(type='ReLU'),
-                 encoder=None,
-                 positional_encoding=dict(
-                     type='SinePositionalEncoding',
-                     num_feats=128,
-                     normalize=True),
-                 init_cfg=None):
-        super(TransformerEncoderPixelDecoder, self).__init__(
-            in_channels,
-            feat_channels,
-            out_channels,
-            norm_cfg,
-            act_cfg,
-            init_cfg=init_cfg)
+    def __init__(self, in_channels, feat_channels, out_channels, norm_cfg=
+        dict(type='GN', num_groups=32), act_cfg=dict(type='ReLU'), encoder=
+        None, positional_encoding=dict(type='SinePositionalEncoding',
+        num_feats=128, normalize=True), init_cfg=None):
+        print('Filip YuNet Minify: Function fidx=3 __init__ called in mmdet/models/plugins/pixel_decoder.py:L138 ')
+        super(TransformerEncoderPixelDecoder, self).__init__(in_channels,
+            feat_channels, out_channels, norm_cfg, act_cfg, init_cfg=init_cfg)
         self.last_feat_conv = None
-
         self.encoder = build_transformer_layer_sequence(encoder)
         self.encoder_embed_dims = self.encoder.embed_dims
-        assert self.encoder_embed_dims == feat_channels, 'embed_dims({}) of ' \
-            'tranformer encoder must equal to feat_channels({})'.format(
-                feat_channels, self.encoder_embed_dims)
+        assert self.encoder_embed_dims == feat_channels, 'embed_dims({}) of tranformer encoder must equal to feat_channels({})'.format(
+            feat_channels, self.encoder_embed_dims)
         self.positional_encoding = build_positional_encoding(
             positional_encoding)
-        self.encoder_in_proj = Conv2d(
-            in_channels[-1], feat_channels, kernel_size=1)
-        self.encoder_out_proj = ConvModule(
-            feat_channels,
-            feat_channels,
-            kernel_size=3,
-            stride=1,
-            padding=1,
-            bias=self.use_bias,
-            norm_cfg=norm_cfg,
-            act_cfg=act_cfg)
+        self.encoder_in_proj = Conv2d(in_channels[-1], feat_channels,
+            kernel_size=1)
+        self.encoder_out_proj = ConvModule(feat_channels, feat_channels,
+            kernel_size=3, stride=1, padding=1, bias=self.use_bias,
+            norm_cfg=norm_cfg, act_cfg=act_cfg)
 
     def init_weights(self):
+        print('Filip YuNet Minify: Function fidx=4 init_weights called in mmdet/models/plugins/pixel_decoder.py:L178 ')
         """Initialize weights."""
         for i in range(0, self.num_inputs - 2):
             caffe2_xavier_init(self.lateral_convs[i].conv, bias=0)
             caffe2_xavier_init(self.output_convs[i].conv, bias=0)
-
         caffe2_xavier_init(self.mask_feature, bias=0)
         caffe2_xavier_init(self.encoder_in_proj, bias=0)
         caffe2_xavier_init(self.encoder_out_proj.conv, bias=0)
-
         for p in self.encoder.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
 
     def forward(self, feats, img_metas):
+        print('Filip YuNet Minify: Function fidx=5 forward called in mmdet/models/plugins/pixel_decoder.py:L192 ')
         """
         Args:
             feats (list[Tensor]): Feature maps of each level. Each has
@@ -206,38 +163,27 @@ class TransformerEncoderPixelDecoder(PixelDecoder):
         bs, c, h, w = feat_last.shape
         input_img_h, input_img_w = img_metas[0]['batch_input_shape']
         padding_mask = feat_last.new_ones((bs, input_img_h, input_img_w),
-                                          dtype=torch.float32)
+            dtype=torch.float32)
         for i in range(bs):
             img_h, img_w, _ = img_metas[i]['img_shape']
-            padding_mask[i, :img_h, :img_w] = 0
-        padding_mask = F.interpolate(
-            padding_mask.unsqueeze(1),
-            size=feat_last.shape[-2:],
-            mode='nearest').to(torch.bool).squeeze(1)
-
+            padding_mask[(i), :img_h, :img_w] = 0
+        padding_mask = F.interpolate(padding_mask.unsqueeze(1), size=
+            feat_last.shape[-2:], mode='nearest').to(torch.bool).squeeze(1)
         pos_embed = self.positional_encoding(padding_mask)
         feat_last = self.encoder_in_proj(feat_last)
-        # (batch_size, c, h, w) -> (num_queries, batch_size, c)
         feat_last = feat_last.flatten(2).permute(2, 0, 1)
         pos_embed = pos_embed.flatten(2).permute(2, 0, 1)
-        # (batch_size, h, w) -> (batch_size, h*w)
         padding_mask = padding_mask.flatten(1)
-        memory = self.encoder(
-            query=feat_last,
-            key=None,
-            value=None,
-            query_pos=pos_embed,
-            query_key_padding_mask=padding_mask)
-        # (num_queries, batch_size, c) -> (batch_size, c, h, w)
-        memory = memory.permute(1, 2, 0).view(bs, self.encoder_embed_dims, h,
-                                              w)
+        memory = self.encoder(query=feat_last, key=None, value=None,
+            query_pos=pos_embed, query_key_padding_mask=padding_mask)
+        memory = memory.permute(1, 2, 0).view(bs, self.encoder_embed_dims, h, w
+            )
         y = self.encoder_out_proj(memory)
         for i in range(self.num_inputs - 2, -1, -1):
             x = feats[i]
             cur_feat = self.lateral_convs[i](x)
-            y = cur_feat + \
-                F.interpolate(y, size=cur_feat.shape[-2:], mode='nearest')
+            y = cur_feat + F.interpolate(y, size=cur_feat.shape[-2:], mode=
+                'nearest')
             y = self.output_convs[i](y)
-
         mask_feature = self.mask_feature(y)
         return mask_feature, memory

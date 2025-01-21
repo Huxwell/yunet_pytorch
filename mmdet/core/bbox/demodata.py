@@ -1,11 +1,10 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
-
 from mmdet.utils.util_random import ensure_rng
 
 
 def random_boxes(num=1, scale=1, rng=None):
+    print('Filip YuNet Minify: Function fidx=0 random_boxes called in mmdet/core/bbox/demodata.py:L8 ')
     """Simple version of ``kwimage.Boxes.random``
 
     Returns:
@@ -25,18 +24,14 @@ def random_boxes(num=1, scale=1, rng=None):
                 [405.3632, 196.3221, 493.3953, 270.7942]])
     """
     rng = ensure_rng(rng)
-
     tlbr = rng.rand(num, 4).astype(np.float32)
-
-    tl_x = np.minimum(tlbr[:, 0], tlbr[:, 2])
-    tl_y = np.minimum(tlbr[:, 1], tlbr[:, 3])
-    br_x = np.maximum(tlbr[:, 0], tlbr[:, 2])
-    br_y = np.maximum(tlbr[:, 1], tlbr[:, 3])
-
-    tlbr[:, 0] = tl_x * scale
-    tlbr[:, 1] = tl_y * scale
-    tlbr[:, 2] = br_x * scale
-    tlbr[:, 3] = br_y * scale
-
+    tl_x = np.minimum(tlbr[:, (0)], tlbr[:, (2)])
+    tl_y = np.minimum(tlbr[:, (1)], tlbr[:, (3)])
+    br_x = np.maximum(tlbr[:, (0)], tlbr[:, (2)])
+    br_y = np.maximum(tlbr[:, (1)], tlbr[:, (3)])
+    tlbr[:, (0)] = tl_x * scale
+    tlbr[:, (1)] = tl_y * scale
+    tlbr[:, (2)] = br_x * scale
+    tlbr[:, (3)] = br_y * scale
     boxes = torch.from_numpy(tlbr)
     return boxes

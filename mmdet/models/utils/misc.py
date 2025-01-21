@@ -1,4 +1,3 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 from torch.autograd import Function
 from torch.nn import functional as F
 
@@ -15,6 +14,7 @@ class SigmoidGeometricMean(Function):
 
     @staticmethod
     def forward(ctx, x, y):
+        print('Filip YuNet Minify: Function fidx=0 forward called in mmdet/models/utils/misc.py:L17 ')
         x_sigmoid = x.sigmoid()
         y_sigmoid = y.sigmoid()
         z = (x_sigmoid * y_sigmoid).sqrt()
@@ -23,6 +23,7 @@ class SigmoidGeometricMean(Function):
 
     @staticmethod
     def backward(ctx, grad_output):
+        print('Filip YuNet Minify: Function fidx=1 backward called in mmdet/models/utils/misc.py:L25 ')
         x_sigmoid, y_sigmoid, z = ctx.saved_tensors
         grad_x = grad_output * z * (1 - x_sigmoid) / 2
         grad_y = grad_output * z * (1 - y_sigmoid) / 2
@@ -33,6 +34,7 @@ sigmoid_geometric_mean = SigmoidGeometricMean.apply
 
 
 def interpolate_as(source, target, mode='bilinear', align_corners=False):
+    print('Filip YuNet Minify: Function fidx=2 interpolate_as called in mmdet/models/utils/misc.py:L35 ')
     """Interpolate the `source` to the shape of the `target`.
 
     The `source` must be a Tensor, but the `target` can be a Tensor or a
@@ -57,16 +59,12 @@ def interpolate_as(source, target, mode='bilinear', align_corners=False):
         target_h, target_w = target.shape[-2:]
         source_h, source_w = source.shape[-2:]
         if target_h != source_h or target_w != source_w:
-            source = F.interpolate(
-                source,
-                size=(target_h, target_w),
-                mode=mode,
-                align_corners=align_corners)
+            source = F.interpolate(source, size=(target_h, target_w), mode=
+                mode, align_corners=align_corners)
         return source
-
     if len(source.shape) == 3:
-        source = source[:, None, :, :]
+        source = source[:, (None), :, :]
         source = _interpolate_as(source, target, mode, align_corners)
-        return source[:, 0, :, :]
+        return source[:, (0), :, :]
     else:
         return _interpolate_as(source, target, mode, align_corners)

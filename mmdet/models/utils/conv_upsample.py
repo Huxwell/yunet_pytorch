@@ -1,4 +1,3 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import torch.nn.functional as F
 from mmcv.cnn import ConvModule
 from mmcv.runner import BaseModule, ModuleList
@@ -25,43 +24,30 @@ class ConvUpsample(BaseModule):
         kwargs (key word augments): Other augments used in ConvModule.
     """
 
-    def __init__(self,
-                 in_channels,
-                 inner_channels,
-                 num_layers=1,
-                 num_upsample=None,
-                 conv_cfg=None,
-                 norm_cfg=None,
-                 init_cfg=None,
-                 **kwargs):
+    def __init__(self, in_channels, inner_channels, num_layers=1,
+        num_upsample=None, conv_cfg=None, norm_cfg=None, init_cfg=None, **
+        kwargs):
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/models/utils/conv_upsample.py:L28 ')
         super(ConvUpsample, self).__init__(init_cfg)
         if num_upsample is None:
             num_upsample = num_layers
-        assert num_upsample <= num_layers, \
-            f'num_upsample({num_upsample})must be no more than ' \
-            f'num_layers({num_layers})'
+        assert num_upsample <= num_layers, f'num_upsample({num_upsample})must be no more than num_layers({num_layers})'
         self.num_layers = num_layers
         self.num_upsample = num_upsample
         self.conv = ModuleList()
         for i in range(num_layers):
-            self.conv.append(
-                ConvModule(
-                    in_channels,
-                    inner_channels,
-                    3,
-                    padding=1,
-                    stride=1,
-                    conv_cfg=conv_cfg,
-                    norm_cfg=norm_cfg,
-                    **kwargs))
+            self.conv.append(ConvModule(in_channels, inner_channels, 3,
+                padding=1, stride=1, conv_cfg=conv_cfg, norm_cfg=norm_cfg,
+                **kwargs))
             in_channels = inner_channels
 
     def forward(self, x):
+        print('Filip YuNet Minify: Function fidx=1 forward called in mmdet/models/utils/conv_upsample.py:L59 ')
         num_upsample = self.num_upsample
         for i in range(self.num_layers):
             x = self.conv[i](x)
             if num_upsample > 0:
                 num_upsample -= 1
-                x = F.interpolate(
-                    x, scale_factor=2, mode='bilinear', align_corners=False)
+                x = F.interpolate(x, scale_factor=2, mode='bilinear',
+                    align_corners=False)
         return x

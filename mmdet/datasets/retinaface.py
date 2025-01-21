@@ -1,24 +1,17 @@
 import numpy as np
-
 from .builder import DATASETS
 from .custom import CustomDataset
-
 try:
     import pycocotools
-    if not hasattr(pycocotools, '__sphinx_mock__'):  # for doc generation
+    if not hasattr(pycocotools, '__sphinx_mock__'):
         assert pycocotools.__version__ >= '12.0.2'
 except AssertionError:
-    raise AssertionError('Incompatible version of pycocotools is installed. '
-                         'Run pip uninstall pycocotools first. Then run pip '
-                         'install mmpycocotools to install open-mmlab forked '
-                         'pycocotools.')
-
-
+    raise AssertionError(
+        'Incompatible version of pycocotools is installed. Run pip uninstall pycocotools first. Then run pip install mmpycocotools to install open-mmlab forked pycocotools.'
+        )
 @DATASETS.register_module()
 class RetinaFaceDataset(CustomDataset):
-
-    CLASSES = ('FG', )
-
+    CLASSES = 'FG',
     def __init__(self, min_size=None, **kwargs):
         self.NK = 5
         self.cat2label = {cat: i for i, cat in enumerate(self.CLASSES)}
@@ -26,7 +19,6 @@ class RetinaFaceDataset(CustomDataset):
         self.max_images = kwargs.pop('max_images', -1)
         self.gt_path = kwargs.get('gt_path')
         super(RetinaFaceDataset, self).__init__(**kwargs)
-
     def _parse_ann_line(self, line):
         values = [float(x) for x in line.strip().split()]
         bbox = np.array(values[0:4], dtype=np.float32)
@@ -40,29 +32,23 @@ class RetinaFaceDataset(CustomDataset):
                 ignore = True
         if len(values) > 4:
             if len(values) > 5:
-                kps = np.array(
-                    values[4:19], dtype=np.float32).reshape((self.NK, 3))
+                kps = np.array(values[4:19], dtype=np.float32).reshape((
+                    self.NK, 3))
                 for li in range(kps.shape[0]):
-                    if (kps[li, :] == -1).all():
-                        kps[li][2] = 0.0  # weight = 0, ignore
+                    if (kps[(li), :] == -1).all():
+                        kps[li][2] = 0.0
                     else:
                         assert kps[li][2] >= 0
-                        kps[li][2] = 1.0  # weight
-
-            else:
-                if not ignore:
-                    ignore = (values[4] == 1)
+                        kps[li][2] = 1.0
+            elif not ignore:
+                ignore = values[4] == 1
         else:
             assert self.test_mode
-
         return dict(bbox=bbox, kps=kps, ignore=ignore, cat='FG')
-
     def load_annotations(self, ann_file):
         """Load annotation from COCO style annotation file.
-
         Args:
             ann_file (str): Path of annotation file.
-
         Returns:
             list[dict]: Annotation info from COCO api.
         """
@@ -75,7 +61,6 @@ class RetinaFaceDataset(CustomDataset):
                 name = value[0]
                 width = int(value[1])
                 height = int(value[2])
-
                 bbox_map[name] = dict(width=width, height=height, objs=[])
                 continue
             assert name is not None
@@ -96,24 +81,20 @@ class RetinaFaceDataset(CustomDataset):
                 data = self._parse_ann_line(line)
                 if data is None:
                     continue
-                objs.append(data)  # data is (bbox, kps, cat)
+                objs.append(data)
             if len(objs) == 0 and not self.test_mode:
                 continue
-            data_infos.append(
-                dict(filename=name, width=width, height=height, objs=objs))
+            data_infos.append(dict(filename=name, width=width, height=
+                height, objs=objs))
         return data_infos
-
     def get_ann_info(self, idx):
         """Get COCO annotation by index.
-
         Args:
             idx (int): Index of data.
-
         Returns:
             dict: Annotation info of specified index.
         """
         data_info = self.data_infos[idx]
-
         bboxes = []
         keypointss = []
         labels = []
@@ -133,7 +114,7 @@ class RetinaFaceDataset(CustomDataset):
                 keypointss.append(keypoints)
         if not bboxes:
             bboxes = np.zeros((0, 4))
-            labels = np.zeros((0, ))
+            labels = np.zeros((0,))
             keypointss = np.zeros((0, self.NK, 3))
         else:
             bboxes = np.array(bboxes, ndmin=2)
@@ -141,14 +122,12 @@ class RetinaFaceDataset(CustomDataset):
             keypointss = np.array(keypointss, ndmin=3)
         if not bboxes_ignore:
             bboxes_ignore = np.zeros((0, 4))
-            labels_ignore = np.zeros((0, ))
+            labels_ignore = np.zeros((0,))
         else:
             bboxes_ignore = np.array(bboxes_ignore, ndmin=2)
             labels_ignore = np.array(labels_ignore)
-        ann = dict(
-            bboxes=bboxes.astype(np.float32),
-            labels=labels.astype(np.int64),
-            keypointss=keypointss.astype(np.float32),
-            bboxes_ignore=bboxes_ignore.astype(np.float32),
-            labels_ignore=labels_ignore.astype(np.int64))
+        ann = dict(bboxes=bboxes.astype(np.float32), labels=labels.astype(
+            np.int64), keypointss=keypointss.astype(np.float32),
+            bboxes_ignore=bboxes_ignore.astype(np.float32), labels_ignore=
+            labels_ignore.astype(np.int64))
         return ann

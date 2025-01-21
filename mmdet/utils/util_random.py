@@ -1,9 +1,9 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 """Helpers for random number generators."""
 import numpy as np
 
 
 def ensure_rng(rng=None):
+    print('Filip YuNet Minify: Function fidx=0 ensure_rng called in mmdet/utils/util_random.py:L6 ')
     """Coerces input into a random number generator.
 
     If the input is None, then a global random state is returned.
@@ -24,7 +24,6 @@ def ensure_rng(rng=None):
     References:
         .. [1] https://gitlab.kitware.com/computer-vision/kwarray/blob/master/kwarray/util_random.py#L270  # noqa: E501
     """
-
     if rng is None:
         rng = np.random.mtrand._rand
     elif isinstance(rng, int):

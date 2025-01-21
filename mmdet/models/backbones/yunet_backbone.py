@@ -1,13 +1,9 @@
 import torch.nn as nn
 import torch.nn.functional as F
-
 from ..builder import BACKBONES
 from ..utils.yunet_layer import Conv4layerBlock, Conv_head
-
-
 @BACKBONES.register_module()
 class YuNetBackbone(nn.Module):
-
     def __init__(self, stage_channels, downsample_idx, out_idx):
         super().__init__()
         self.layer_num = len(stage_channels)
@@ -17,7 +13,6 @@ class YuNetBackbone(nn.Module):
         for i in range(1, self.layer_num):
             self.add_module(f'model{i}', Conv4layerBlock(*stage_channels[i]))
         self.init_weights()
-
     def init_weights(self, pretrained=None):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -29,7 +24,6 @@ class YuNetBackbone(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
-
     def forward(self, x):
         out = []
         for i in range(self.layer_num):

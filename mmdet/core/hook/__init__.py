@@ -1,4 +1,3 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 from .checkloss_hook import CheckInvalidLossHook
 from .ema import ExpMomentumEMAHook, LinearMomentumEMAHook
 from .memory_profiler_hook import MemoryProfilerHook
@@ -9,10 +8,7 @@ from .yolox_lrupdater_hook import YOLOXLrUpdaterHook
 from .yolox_mode_switch_hook import YOLOXModeSwitchHook
 from .yunet_sample_size_statistics_hook import YuNetSampleSizeStatisticsHook
 from .yunet_text_logger_hook import YuNetTextLoggerHook
-
-__all__ = [
-    'SyncRandomSizeHook', 'YOLOXModeSwitchHook', 'SyncNormHook',
+__all__ = ['SyncRandomSizeHook', 'YOLOXModeSwitchHook', 'SyncNormHook',
     'ExpMomentumEMAHook', 'LinearMomentumEMAHook', 'YOLOXLrUpdaterHook',
     'CheckInvalidLossHook', 'SetEpochInfoHook', 'MemoryProfilerHook',
-    'YuNetTextLoggerHook', 'YuNetSampleSizeStatisticsHook'
-]
+    'YuNetTextLoggerHook', 'YuNetSampleSizeStatisticsHook']

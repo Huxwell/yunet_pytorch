@@ -1,24 +1,19 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import contextlib
 import sys
 import time
-
 import torch
-
 if sys.version_info >= (3, 7):
 
     @contextlib.contextmanager
-    def profile_time(trace_name,
-                     name,
-                     enabled=True,
-                     stream=None,
-                     end_stream=None):
+    def profile_time(trace_name, name, enabled=True, stream=None,
+        end_stream=None):
+        print('Filip YuNet Minify: Function fidx=0 profile_time called in mmdet/utils/profiling.py:L11 ')
         """Print time spent by CPU and GPU.
 
         Useful as a temporary context manager to find sweet spots of code
         suitable for async implementation.
         """
-        if (not enabled) or not torch.cuda.is_available():
+        if not enabled or not torch.cuda.is_available():
             yield
             return
         stream = stream if stream else torch.cuda.current_stream()

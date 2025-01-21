@@ -1,13 +1,12 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import torch.nn as nn
 import torch.nn.functional as F
-
 from ..builder import LOSSES
 from .utils import weighted_loss
 
 
 @weighted_loss
 def mse_loss(pred, target):
+    print('Filip YuNet Minify: Function fidx=0 mse_loss called in mmdet/models/losses/mse_loss.py:L10 ')
     """Warpper of mse loss."""
     return F.mse_loss(pred, target, reduction='none')
 
@@ -23,16 +22,14 @@ class MSELoss(nn.Module):
     """
 
     def __init__(self, reduction='mean', loss_weight=1.0):
+        print('Filip YuNet Minify: Function fidx=1 __init__ called in mmdet/models/losses/mse_loss.py:L25 ')
         super().__init__()
         self.reduction = reduction
         self.loss_weight = loss_weight
 
-    def forward(self,
-                pred,
-                target,
-                weight=None,
-                avg_factor=None,
-                reduction_override=None):
+    def forward(self, pred, target, weight=None, avg_factor=None,
+        reduction_override=None):
+        print('Filip YuNet Minify: Function fidx=2 forward called in mmdet/models/losses/mse_loss.py:L30 ')
         """Forward function of loss.
 
         Args:
@@ -50,8 +47,8 @@ class MSELoss(nn.Module):
             torch.Tensor: The calculated loss
         """
         assert reduction_override in (None, 'none', 'mean', 'sum')
-        reduction = (
-            reduction_override if reduction_override else self.reduction)
-        loss = self.loss_weight * mse_loss(
-            pred, target, weight, reduction=reduction, avg_factor=avg_factor)
+        reduction = (reduction_override if reduction_override else self.
+            reduction)
+        loss = self.loss_weight * mse_loss(pred, target, weight, reduction=
+            reduction, avg_factor=avg_factor)
         return loss

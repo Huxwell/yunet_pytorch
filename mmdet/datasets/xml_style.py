@@ -1,11 +1,8 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import os.path as osp
 import xml.etree.ElementTree as ET
-
 import mmcv
 import numpy as np
 from PIL import Image
-
 from .builder import DATASETS
 from .custom import CustomDataset
 
@@ -22,13 +19,11 @@ class XMLDataset(CustomDataset):
         ann_subdir (str): Subdir where annotations are. Default: Annotations.
     """
 
-    def __init__(self,
-                 min_size=None,
-                 img_subdir='JPEGImages',
-                 ann_subdir='Annotations',
-                 **kwargs):
-        assert self.CLASSES or kwargs.get(
-            'classes', None), 'CLASSES in `XMLDataset` can not be None.'
+    def __init__(self, min_size=None, img_subdir='JPEGImages', ann_subdir=
+        'Annotations', **kwargs):
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/datasets/xml_style.py:L25 ')
+        assert self.CLASSES or kwargs.get('classes', None
+            ), 'CLASSES in `XMLDataset` can not be None.'
         self.img_subdir = img_subdir
         self.ann_subdir = ann_subdir
         super(XMLDataset, self).__init__(**kwargs)
@@ -36,6 +31,7 @@ class XMLDataset(CustomDataset):
         self.min_size = min_size
 
     def load_annotations(self, ann_file):
+        print('Filip YuNet Minify: Function fidx=1 load_annotations called in mmdet/datasets/xml_style.py:L38 ')
         """Load annotation from XML style ann_file.
 
         Args:
@@ -44,13 +40,12 @@ class XMLDataset(CustomDataset):
         Returns:
             list[dict]: Annotation info from XML file.
         """
-
         data_infos = []
         img_ids = mmcv.list_from_file(ann_file)
         for img_id in img_ids:
             filename = osp.join(self.img_subdir, f'{img_id}.jpg')
             xml_path = osp.join(self.img_prefix, self.ann_subdir,
-                                f'{img_id}.xml')
+                f'{img_id}.xml')
             tree = ET.parse(xml_path)
             root = tree.getroot()
             size = root.find('size')
@@ -61,12 +56,12 @@ class XMLDataset(CustomDataset):
                 img_path = osp.join(self.img_prefix, filename)
                 img = Image.open(img_path)
                 width, height = img.size
-            data_infos.append(
-                dict(id=img_id, filename=filename, width=width, height=height))
-
+            data_infos.append(dict(id=img_id, filename=filename, width=
+                width, height=height))
         return data_infos
 
     def _filter_imgs(self, min_size=32):
+        print('Filip YuNet Minify: Function fidx=2 _filter_imgs called in mmdet/datasets/xml_style.py:L69 ')
         """Filter images too small or without annotation."""
         valid_inds = []
         for i, img_info in enumerate(self.data_infos):
@@ -75,7 +70,7 @@ class XMLDataset(CustomDataset):
             if self.filter_empty_gt:
                 img_id = img_info['id']
                 xml_path = osp.join(self.img_prefix, self.ann_subdir,
-                                    f'{img_id}.xml')
+                    f'{img_id}.xml')
                 tree = ET.parse(xml_path)
                 root = tree.getroot()
                 for obj in root.findall('object'):
@@ -88,6 +83,7 @@ class XMLDataset(CustomDataset):
         return valid_inds
 
     def get_ann_info(self, idx):
+        print('Filip YuNet Minify: Function fidx=3 get_ann_info called in mmdet/datasets/xml_style.py:L90 ')
         """Get annotation from XML file by index.
 
         Args:
@@ -96,7 +92,6 @@ class XMLDataset(CustomDataset):
         Returns:
             dict: Annotation info of specified index.
         """
-
         img_id = self.data_infos[idx]['id']
         xml_path = osp.join(self.img_prefix, self.ann_subdir, f'{img_id}.xml')
         tree = ET.parse(xml_path)
@@ -113,14 +108,9 @@ class XMLDataset(CustomDataset):
             difficult = obj.find('difficult')
             difficult = 0 if difficult is None else int(difficult.text)
             bnd_box = obj.find('bndbox')
-            # TODO: check whether it is necessary to use int
-            # Coordinates may be float type
-            bbox = [
-                int(float(bnd_box.find('xmin').text)),
-                int(float(bnd_box.find('ymin').text)),
-                int(float(bnd_box.find('xmax').text)),
-                int(float(bnd_box.find('ymax').text))
-            ]
+            bbox = [int(float(bnd_box.find('xmin').text)), int(float(
+                bnd_box.find('ymin').text)), int(float(bnd_box.find('xmax')
+                .text)), int(float(bnd_box.find('ymax').text))]
             ignore = False
             if self.min_size:
                 assert not self.test_mode
@@ -136,24 +126,23 @@ class XMLDataset(CustomDataset):
                 labels.append(label)
         if not bboxes:
             bboxes = np.zeros((0, 4))
-            labels = np.zeros((0, ))
+            labels = np.zeros((0,))
         else:
             bboxes = np.array(bboxes, ndmin=2) - 1
             labels = np.array(labels)
         if not bboxes_ignore:
             bboxes_ignore = np.zeros((0, 4))
-            labels_ignore = np.zeros((0, ))
+            labels_ignore = np.zeros((0,))
         else:
             bboxes_ignore = np.array(bboxes_ignore, ndmin=2) - 1
             labels_ignore = np.array(labels_ignore)
-        ann = dict(
-            bboxes=bboxes.astype(np.float32),
-            labels=labels.astype(np.int64),
-            bboxes_ignore=bboxes_ignore.astype(np.float32),
+        ann = dict(bboxes=bboxes.astype(np.float32), labels=labels.astype(
+            np.int64), bboxes_ignore=bboxes_ignore.astype(np.float32),
             labels_ignore=labels_ignore.astype(np.int64))
         return ann
 
     def get_cat_ids(self, idx):
+        print('Filip YuNet Minify: Function fidx=4 get_cat_ids called in mmdet/datasets/xml_style.py:L156 ')
         """Get category ids in XML file by index.
 
         Args:
@@ -162,7 +151,6 @@ class XMLDataset(CustomDataset):
         Returns:
             list[int]: All categories in the image of specified index.
         """
-
         cat_ids = []
         img_id = self.data_infos[idx]['id']
         xml_path = osp.join(self.img_prefix, self.ann_subdir, f'{img_id}.xml')
@@ -174,5 +162,4 @@ class XMLDataset(CustomDataset):
                 continue
             label = self.cat2label[name]
             cat_ids.append(label)
-
         return cat_ids

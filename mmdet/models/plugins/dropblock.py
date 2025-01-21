@@ -1,10 +1,8 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import PLUGIN_LAYERS
-
-eps = 1e-6
+eps = 1e-06
 
 
 @PLUGIN_LAYERS.register_module()
@@ -23,6 +21,7 @@ class DropBlock(nn.Module):
     """
 
     def __init__(self, drop_prob, block_size, warmup_iters=2000, **kwargs):
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/models/plugins/dropblock.py:L25 ')
         super(DropBlock, self).__init__()
         assert block_size % 2 == 1
         assert 0 < drop_prob <= 1
@@ -33,6 +32,7 @@ class DropBlock(nn.Module):
         self.iter_cnt = 0
 
     def forward(self, x):
+        print('Filip YuNet Minify: Function fidx=1 forward called in mmdet/models/plugins/dropblock.py:L35 ')
         """
         Args:
             x (Tensor): Input feature map on which some areas will be randomly
@@ -46,20 +46,17 @@ class DropBlock(nn.Module):
         self.iter_cnt += 1
         N, C, H, W = list(x.shape)
         gamma = self._compute_gamma((H, W))
-        mask_shape = (N, C, H - self.block_size + 1, W - self.block_size + 1)
+        mask_shape = N, C, H - self.block_size + 1, W - self.block_size + 1
         mask = torch.bernoulli(torch.full(mask_shape, gamma, device=x.device))
-
         mask = F.pad(mask, [self.block_size // 2] * 4, value=0)
-        mask = F.max_pool2d(
-            input=mask,
-            stride=(1, 1),
-            kernel_size=(self.block_size, self.block_size),
-            padding=self.block_size // 2)
+        mask = F.max_pool2d(input=mask, stride=(1, 1), kernel_size=(self.
+            block_size, self.block_size), padding=self.block_size // 2)
         mask = 1 - mask
         x = x * mask * mask.numel() / (eps + mask.sum())
         return x
 
     def _compute_gamma(self, feat_size):
+        print('Filip YuNet Minify: Function fidx=2 _compute_gamma called in mmdet/models/plugins/dropblock.py:L62 ')
         """Compute the value of gamma according to paper. gamma is the
         parameter of bernoulli distribution, which controls the number of
         features to drop.
@@ -72,14 +69,16 @@ class DropBlock(nn.Module):
         Returns:
             float: The value of gamma.
         """
-        gamma = (self.drop_prob * feat_size[0] * feat_size[1])
-        gamma /= ((feat_size[0] - self.block_size + 1) *
-                  (feat_size[1] - self.block_size + 1))
-        gamma /= (self.block_size**2)
-        factor = (1.0 if self.iter_cnt > self.warmup_iters else self.iter_cnt /
-                  self.warmup_iters)
+        gamma = self.drop_prob * feat_size[0] * feat_size[1]
+        gamma /= (feat_size[0] - self.block_size + 1) * (feat_size[1] -
+            self.block_size + 1)
+        gamma /= self.block_size ** 2
+        factor = (1.0 if self.iter_cnt > self.warmup_iters else self.
+            iter_cnt / self.warmup_iters)
         return gamma * factor
 
     def extra_repr(self):
-        return (f'drop_prob={self.drop_prob}, block_size={self.block_size}, '
-                f'warmup_iters={self.warmup_iters}')
+        print('Filip YuNet Minify: Function fidx=3 extra_repr called in mmdet/models/plugins/dropblock.py:L83 ')
+        return (
+            f'drop_prob={self.drop_prob}, block_size={self.block_size}, warmup_iters={self.warmup_iters}'
+            )

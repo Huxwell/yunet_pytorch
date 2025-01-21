@@ -1,6 +1,4 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import math
-
 from mmcv.parallel import is_module_wrapper
 from mmcv.runner.hooks import HOOKS, Hook
 
@@ -29,12 +27,9 @@ class BaseEMAHook(Hook):
             It uses `momentum` as a constant. Defaults to None.
     """
 
-    def __init__(self,
-                 momentum=0.0002,
-                 interval=1,
-                 skip_buffers=False,
-                 resume_from=None,
-                 momentum_fun=None):
+    def __init__(self, momentum=0.0002, interval=1, skip_buffers=False,
+        resume_from=None, momentum_fun=None):
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/core/hook/ema.py:L32 ')
         assert 0 < momentum < 1
         self.momentum = momentum
         self.skip_buffers = skip_buffers
@@ -43,6 +38,7 @@ class BaseEMAHook(Hook):
         self.momentum_fun = momentum_fun
 
     def before_run(self, runner):
+        print('Filip YuNet Minify: Function fidx=1 before_run called in mmdet/core/hook/ema.py:L45 ')
         """To resume model with it's ema parameters more friendly.
 
         Register ema parameter as ``named_buffer`` to model.
@@ -56,7 +52,6 @@ class BaseEMAHook(Hook):
         else:
             self.model_parameters = model.state_dict()
         for name, value in self.model_parameters.items():
-            # "." is not allowed in module's buffer name
             buffer_name = f"ema_{name.replace('.', '_')}"
             self.param_ema_buffer[name] = buffer_name
             model.register_buffer(buffer_name, value.data.clone())
@@ -65,33 +60,37 @@ class BaseEMAHook(Hook):
             runner.resume(self.checkpoint)
 
     def get_momentum(self, runner):
-        return self.momentum_fun(runner.iter) if self.momentum_fun else \
-                        self.momentum
+        print('Filip YuNet Minify: Function fidx=2 get_momentum called in mmdet/core/hook/ema.py:L67 ')
+        return self.momentum_fun(runner.iter
+            ) if self.momentum_fun else self.momentum
 
     def after_train_iter(self, runner):
+        print('Filip YuNet Minify: Function fidx=3 after_train_iter called in mmdet/core/hook/ema.py:L71 ')
         """Update ema parameter every self.interval iterations."""
         if (runner.iter + 1) % self.interval != 0:
             return
         momentum = self.get_momentum(runner)
         for name, parameter in self.model_parameters.items():
-            # exclude num_tracking
             if parameter.dtype.is_floating_point:
                 buffer_name = self.param_ema_buffer[name]
                 buffer_parameter = self.model_buffers[buffer_name]
-                buffer_parameter.mul_(1 - momentum).add_(
-                    parameter.data, alpha=momentum)
+                buffer_parameter.mul_(1 - momentum).add_(parameter.data,
+                    alpha=momentum)
 
     def after_train_epoch(self, runner):
+        print('Filip YuNet Minify: Function fidx=4 after_train_epoch called in mmdet/core/hook/ema.py:L84 ')
         """We load parameter values from ema backup to model before the
         EvalHook."""
         self._swap_ema_parameters()
 
     def before_train_epoch(self, runner):
+        print('Filip YuNet Minify: Function fidx=5 before_train_epoch called in mmdet/core/hook/ema.py:L89 ')
         """We recover model's parameter from ema backup after last epoch's
         EvalHook."""
         self._swap_ema_parameters()
 
     def _swap_ema_parameters(self):
+        print('Filip YuNet Minify: Function fidx=6 _swap_ema_parameters called in mmdet/core/hook/ema.py:L94 ')
         """Swap the parameter of model with parameter in ema_buffer."""
         for name, value in self.model_parameters.items():
             temp = value.data.clone()
@@ -110,9 +109,10 @@ class ExpMomentumEMAHook(BaseEMAHook):
     """
 
     def __init__(self, total_iter=2000, **kwargs):
+        print('Filip YuNet Minify: Function fidx=7 __init__ called in mmdet/core/hook/ema.py:L112 ')
         super(ExpMomentumEMAHook, self).__init__(**kwargs)
-        self.momentum_fun = lambda x: (1 - self.momentum) * math.exp(-(
-            1 + x) / total_iter) + self.momentum
+        self.momentum_fun = lambda x: (1 - self.momentum) * math.exp(-(1 +
+            x) / total_iter) + self.momentum
 
 
 @HOOKS.register_module()
@@ -125,6 +125,7 @@ class LinearMomentumEMAHook(BaseEMAHook):
     """
 
     def __init__(self, warm_up=100, **kwargs):
+        print('Filip YuNet Minify: Function fidx=8 __init__ called in mmdet/core/hook/ema.py:L127 ')
         super(LinearMomentumEMAHook, self).__init__(**kwargs)
-        self.momentum_fun = lambda x: min(self.momentum**self.interval,
-                                          (1 + x) / (warm_up + x))
+        self.momentum_fun = lambda x: min(self.momentum ** self.interval, (
+            1 + x) / (warm_up + x))

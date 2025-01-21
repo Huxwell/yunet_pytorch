@@ -1,7 +1,5 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
 import torch
-
 from ..builder import BBOX_CODERS
 from .base_bbox_coder import BaseBBoxCoder
 
@@ -19,12 +17,14 @@ class YOLOBBoxCoder(BaseBBoxCoder):
         eps (float): Min value of cx, cy when encoding.
     """
 
-    def __init__(self, eps=1e-6):
+    def __init__(self, eps=1e-06):
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/core/bbox/coder/yolo_bbox_coder.py:L22 ')
         super(BaseBBoxCoder, self).__init__()
         self.eps = eps
 
     @mmcv.jit(coderize=True)
     def encode(self, bboxes, gt_bboxes, stride):
+        print('Filip YuNet Minify: Function fidx=1 encode called in mmdet/core/bbox/coder/yolo_bbox_coder.py:L27 ')
         """Get box regression transformation deltas that can be used to
         transform the ``bboxes`` into the ``gt_bboxes``.
 
@@ -37,7 +37,6 @@ class YOLOBBoxCoder(BaseBBoxCoder):
         Returns:
             torch.Tensor: Box transformation deltas
         """
-
         assert bboxes.size(0) == gt_bboxes.size(0)
         assert bboxes.size(-1) == gt_bboxes.size(-1) == 4
         x_center_gt = (gt_bboxes[..., 0] + gt_bboxes[..., 2]) * 0.5
@@ -50,16 +49,17 @@ class YOLOBBoxCoder(BaseBBoxCoder):
         h = bboxes[..., 3] - bboxes[..., 1]
         w_target = torch.log((w_gt / w).clamp(min=self.eps))
         h_target = torch.log((h_gt / h).clamp(min=self.eps))
-        x_center_target = ((x_center_gt - x_center) / stride + 0.5).clamp(
-            self.eps, 1 - self.eps)
-        y_center_target = ((y_center_gt - y_center) / stride + 0.5).clamp(
-            self.eps, 1 - self.eps)
-        encoded_bboxes = torch.stack(
-            [x_center_target, y_center_target, w_target, h_target], dim=-1)
+        x_center_target = ((x_center_gt - x_center) / stride + 0.5).clamp(self
+            .eps, 1 - self.eps)
+        y_center_target = ((y_center_gt - y_center) / stride + 0.5).clamp(self
+            .eps, 1 - self.eps)
+        encoded_bboxes = torch.stack([x_center_target, y_center_target,
+            w_target, h_target], dim=-1)
         return encoded_bboxes
 
     @mmcv.jit(coderize=True)
     def decode(self, bboxes, pred_bboxes, stride):
+        print('Filip YuNet Minify: Function fidx=2 decode called in mmdet/core/bbox/coder/yolo_bbox_coder.py:L62 ')
         """Apply transformation `pred_bboxes` to `boxes`.
 
         Args:
@@ -71,13 +71,11 @@ class YOLOBBoxCoder(BaseBBoxCoder):
             torch.Tensor: Decoded boxes.
         """
         assert pred_bboxes.size(-1) == bboxes.size(-1) == 4
-        xy_centers = (bboxes[..., :2] + bboxes[..., 2:]) * 0.5 + (
-            pred_bboxes[..., :2] - 0.5) * stride
-        whs = (bboxes[..., 2:] -
-               bboxes[..., :2]) * 0.5 * pred_bboxes[..., 2:].exp()
-        decoded_bboxes = torch.stack(
-            (xy_centers[..., 0] - whs[..., 0], xy_centers[..., 1] -
-             whs[..., 1], xy_centers[..., 0] + whs[..., 0],
-             xy_centers[..., 1] + whs[..., 1]),
-            dim=-1)
+        xy_centers = (bboxes[(...), :2] + bboxes[(...), 2:]) * 0.5 + (
+            pred_bboxes[(...), :2] - 0.5) * stride
+        whs = (bboxes[(...), 2:] - bboxes[(...), :2]) * 0.5 * pred_bboxes[(
+            ...), 2:].exp()
+        decoded_bboxes = torch.stack((xy_centers[..., 0] - whs[..., 0], 
+            xy_centers[..., 1] - whs[..., 1], xy_centers[..., 0] + whs[...,
+            0], xy_centers[..., 1] + whs[..., 1]), dim=-1)
         return decoded_bboxes

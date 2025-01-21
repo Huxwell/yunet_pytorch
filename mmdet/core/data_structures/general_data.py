@@ -1,9 +1,6 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import copy
-
 import numpy as np
 import torch
-
 from mmdet.utils.util_mixins import NiceRepr
 
 
@@ -85,16 +82,16 @@ class GeneralData(NiceRepr):
     """
 
     def __init__(self, meta_info=None, data=None):
-
+        print('Filip YuNet Minify: Function fidx=0 __init__ called in mmdet/core/data_structures/general_data.py:L87 ')
         self._meta_info_fields = set()
         self._data_fields = set()
-
         if meta_info is not None:
             self.set_meta_info(meta_info=meta_info)
         if data is not None:
             self.set_data(data)
 
     def set_meta_info(self, meta_info):
+        print('Filip YuNet Minify: Function fidx=1 set_meta_info called in mmdet/core/data_structures/general_data.py:L97 ')
         """Add meta information.
 
         Args:
@@ -102,11 +99,10 @@ class GeneralData(NiceRepr):
                 of image. such as `img_shape`, `scale_factor`, etc.
                 Default: None.
         """
-        assert isinstance(meta_info,
-                          dict), f'meta should be a `dict` but get {meta_info}'
+        assert isinstance(meta_info, dict
+            ), f'meta should be a `dict` but get {meta_info}'
         meta = copy.deepcopy(meta_info)
         for k, v in meta.items():
-            # should be consistent with original meta_info
             if k in self._meta_info_fields:
                 ori_value = getattr(self, k)
                 if isinstance(ori_value, (torch.Tensor, np.ndarray)):
@@ -114,31 +110,33 @@ class GeneralData(NiceRepr):
                         continue
                     else:
                         raise KeyError(
-                            f'img_meta_info {k} has been set as '
-                            f'{getattr(self, k)} before, which is immutable ')
+                            f'img_meta_info {k} has been set as {getattr(self, k)} before, which is immutable '
+                            )
                 elif ori_value == v:
                     continue
                 else:
                     raise KeyError(
-                        f'img_meta_info {k} has been set as '
-                        f'{getattr(self, k)} before, which is immutable ')
+                        f'img_meta_info {k} has been set as {getattr(self, k)} before, which is immutable '
+                        )
             else:
                 self._meta_info_fields.add(k)
                 self.__dict__[k] = v
 
     def set_data(self, data):
+        print('Filip YuNet Minify: Function fidx=2 set_data called in mmdet/core/data_structures/general_data.py:L129 ')
         """Update a dict to `data_fields`.
 
         Args:
             data (dict): A dict contains annotations of image or
                 model predictions. Default: None.
         """
-        assert isinstance(data,
-                          dict), f'meta should be a `dict` but get {data}'
+        assert isinstance(data, dict
+            ), f'meta should be a `dict` but get {data}'
         for k, v in data.items():
             self.__setattr__(k, v)
 
     def new(self, meta_info=None, data=None):
+        print('Filip YuNet Minify: Function fidx=3 new called in mmdet/core/data_structures/general_data.py:L141 ')
         """Return a new results with same image meta information.
 
         Args:
@@ -157,6 +155,7 @@ class GeneralData(NiceRepr):
         return new_data
 
     def keys(self):
+        print('Filip YuNet Minify: Function fidx=4 keys called in mmdet/core/data_structures/general_data.py:L159 ')
         """
         Returns:
             list: Contains all keys in data_fields.
@@ -164,6 +163,7 @@ class GeneralData(NiceRepr):
         return [key for key in self._data_fields]
 
     def meta_info_keys(self):
+        print('Filip YuNet Minify: Function fidx=5 meta_info_keys called in mmdet/core/data_structures/general_data.py:L166 ')
         """
         Returns:
             list: Contains all keys in meta_info_fields.
@@ -171,6 +171,7 @@ class GeneralData(NiceRepr):
         return [key for key in self._meta_info_fields]
 
     def values(self):
+        print('Filip YuNet Minify: Function fidx=6 values called in mmdet/core/data_structures/general_data.py:L173 ')
         """
         Returns:
             list: Contains all values in data_fields.
@@ -178,6 +179,7 @@ class GeneralData(NiceRepr):
         return [getattr(self, k) for k in self.keys()]
 
     def meta_info_values(self):
+        print('Filip YuNet Minify: Function fidx=7 meta_info_values called in mmdet/core/data_structures/general_data.py:L180 ')
         """
         Returns:
             list: Contains all values in meta_info_fields.
@@ -185,76 +187,76 @@ class GeneralData(NiceRepr):
         return [getattr(self, k) for k in self.meta_info_keys()]
 
     def items(self):
+        print('Filip YuNet Minify: Function fidx=8 items called in mmdet/core/data_structures/general_data.py:L187 ')
         for k in self.keys():
-            yield (k, getattr(self, k))
+            yield k, getattr(self, k)
 
     def meta_info_items(self):
+        print('Filip YuNet Minify: Function fidx=9 meta_info_items called in mmdet/core/data_structures/general_data.py:L191 ')
         for k in self.meta_info_keys():
-            yield (k, getattr(self, k))
+            yield k, getattr(self, k)
 
     def __setattr__(self, name, val):
+        print('Filip YuNet Minify: Function fidx=10 __setattr__ called in mmdet/core/data_structures/general_data.py:L195 ')
         if name in ('_meta_info_fields', '_data_fields'):
             if not hasattr(self, name):
                 super().__setattr__(name, val)
             else:
                 raise AttributeError(
-                    f'{name} has been used as a '
-                    f'private attribute, which is immutable. ')
+                    f'{name} has been used as a private attribute, which is immutable. '
+                    )
         else:
             if name in self._meta_info_fields:
-                raise AttributeError(f'`{name}` is used in meta information,'
-                                     f'which is immutable')
-
+                raise AttributeError(
+                    f'`{name}` is used in meta information,which is immutable')
             self._data_fields.add(name)
             super().__setattr__(name, val)
 
     def __delattr__(self, item):
-
+        print('Filip YuNet Minify: Function fidx=11 __delattr__ called in mmdet/core/data_structures/general_data.py:L211 ')
         if item in ('_meta_info_fields', '_data_fields'):
-            raise AttributeError(f'{item} has been used as a '
-                                 f'private attribute, which is immutable. ')
-
+            raise AttributeError(
+                f'{item} has been used as a private attribute, which is immutable. '
+                )
         if item in self._meta_info_fields:
-            raise KeyError(f'{item} is used in meta information, '
-                           f'which is immutable.')
+            raise KeyError(
+                f'{item} is used in meta information, which is immutable.')
         super().__delattr__(item)
         if item in self._data_fields:
             self._data_fields.remove(item)
-
-    # dict-like methods
     __setitem__ = __setattr__
     __delitem__ = __delattr__
 
     def __getitem__(self, name):
+        print('Filip YuNet Minify: Function fidx=12 __getitem__ called in mmdet/core/data_structures/general_data.py:L228 ')
         return getattr(self, name)
 
     def get(self, *args):
+        print('Filip YuNet Minify: Function fidx=13 get called in mmdet/core/data_structures/general_data.py:L231 ')
         assert len(args) < 3, '`get` get more than 2 arguments'
         return self.__dict__.get(*args)
 
     def pop(self, *args):
+        print('Filip YuNet Minify: Function fidx=14 pop called in mmdet/core/data_structures/general_data.py:L235 ')
         assert len(args) < 3, '`pop` get more than 2 arguments'
         name = args[0]
         if name in self._meta_info_fields:
-            raise KeyError(f'{name} is a key in meta information, '
-                           f'which is immutable')
-
+            raise KeyError(
+                f'{name} is a key in meta information, which is immutable')
         if args[0] in self._data_fields:
             self._data_fields.remove(args[0])
             return self.__dict__.pop(*args)
-
-        # with default value
         elif len(args) == 2:
             return args[1]
         else:
             raise KeyError(f'{args[0]}')
 
     def __contains__(self, item):
-        return item in self._data_fields or \
-                    item in self._meta_info_fields
+        print('Filip YuNet Minify: Function fidx=15 __contains__ called in mmdet/core/data_structures/general_data.py:L252 ')
+        return item in self._data_fields or item in self._meta_info_fields
 
-    # Tensor-like methods
     def to(self, *args, **kwargs):
+        print('Filip YuNet Minify: Function fidx=16 to called in mmdet/core/data_structures/general_data.py:L257 ')
         """Apply same name function to all tensors in data_fields."""
         new_data = self.new()
         for k, v in self.items():
@@ -263,8 +265,8 @@ class GeneralData(NiceRepr):
             new_data[k] = v
         return new_data
 
-    # Tensor-like methods
     def cpu(self):
+        print('Filip YuNet Minify: Function fidx=17 cpu called in mmdet/core/data_structures/general_data.py:L267 ')
         """Apply same name function to all tensors in data_fields."""
         new_data = self.new()
         for k, v in self.items():
@@ -273,8 +275,8 @@ class GeneralData(NiceRepr):
             new_data[k] = v
         return new_data
 
-    # Tensor-like methods
     def mlu(self):
+        print('Filip YuNet Minify: Function fidx=18 mlu called in mmdet/core/data_structures/general_data.py:L277 ')
         """Apply same name function to all tensors in data_fields."""
         new_data = self.new()
         for k, v in self.items():
@@ -283,8 +285,8 @@ class GeneralData(NiceRepr):
             new_data[k] = v
         return new_data
 
-    # Tensor-like methods
     def cuda(self):
+        print('Filip YuNet Minify: Function fidx=19 cuda called in mmdet/core/data_structures/general_data.py:L287 ')
         """Apply same name function to all tensors in data_fields."""
         new_data = self.new()
         for k, v in self.items():
@@ -293,8 +295,8 @@ class GeneralData(NiceRepr):
             new_data[k] = v
         return new_data
 
-    # Tensor-like methods
     def detach(self):
+        print('Filip YuNet Minify: Function fidx=20 detach called in mmdet/core/data_structures/general_data.py:L297 ')
         """Apply same name function to all tensors in data_fields."""
         new_data = self.new()
         for k, v in self.items():
@@ -303,8 +305,8 @@ class GeneralData(NiceRepr):
             new_data[k] = v
         return new_data
 
-    # Tensor-like methods
     def numpy(self):
+        print('Filip YuNet Minify: Function fidx=21 numpy called in mmdet/core/data_structures/general_data.py:L307 ')
         """Apply same name function to all tensors in data_fields."""
         new_data = self.new()
         for k, v in self.items():
@@ -314,6 +316,7 @@ class GeneralData(NiceRepr):
         return new_data
 
     def __nice__(self):
+        print('Filip YuNet Minify: Function fidx=22 __nice__ called in mmdet/core/data_structures/general_data.py:L316 ')
         repr = '\n \n  META INFORMATION \n'
         for k, v in self.meta_info_items():
             repr += f'{k}: {v} \n'
